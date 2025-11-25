@@ -94,3 +94,31 @@ export const CHECKLIST_ITEMS: ChecklistItem[] = [
     { id: 'cofre', category: 'Eletro/Extras', description: 'Cofre (Testar Travamento e Resetar Senha)' },
     { id: 'av', category: 'Eletro/Extras', description: 'TV e Som (Canais, Conexões, Controles)' },
 ];
+
+// Mock data for AI report generation. In a real app, this would be fetched from Firestore.
+export const MOCK_CHECKLIST_DATA = [
+  {
+    houseName: "Eugénia",
+    items: {
+      ac_func: { status: 3, note: "Não está gelando o suficiente." },
+      vazamentos: { status: 1, note: "" },
+      minibar: { status: 1, note: "" },
+    }
+  },
+  {
+    houseName: "Lago",
+    items: {
+      ac_func: { status: 1, note: "" },
+      vazamentos: { status: 3, note: "Gotejando sob a pia da cozinha." },
+      portas_janelas: { status: 3, note: "Porta do quarto não tranca." },
+    }
+  },
+  {
+    houseName: "Sr. João",
+    items: {
+      ac_func: { status: 1, note: "" },
+      vazamentos: { status: 1, note: "" },
+      descargas: { status: 0, note: "" },
+    }
+  }
+];

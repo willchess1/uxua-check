@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TECHNICIANS, HOUSES, HOUSES_TO_INSPECT, USERS } from '@/lib/data';
 import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
-import { ListChecks, LogOut, CalendarPlus } from 'lucide-react';
+import { ListChecks, LogOut, CalendarPlus, AreaChart } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -121,8 +121,9 @@ export default function DashboardPage() {
                     <CalendarPlus className="mr-2" />
                     Agendar Vistorias
                   </Button>
-                  <Button size="lg" variant="secondary" disabled>
-                    Ver Relatórios (em breve)
+                  <Button onClick={() => router.push('/dashboard/reports')} size="lg" variant="secondary">
+                     <AreaChart className="mr-2" />
+                    Ver Relatórios com IA
                   </Button>
                 </div>
               )}

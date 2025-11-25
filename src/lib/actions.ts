@@ -1,6 +1,7 @@
 'use server';
 
 import { summarizePropertyIssues, type SummarizePropertyIssuesInput } from '@/ai/flows/summarize-property-issues';
+import { analyzeMaintenanceData, type AnalyzeMaintenanceDataInput, type AnalyzeMaintenanceDataOutput } from '@/ai/flows/analyze-maintenance-data';
 
 export async function getSummary(input: SummarizePropertyIssuesInput) {
     try {
@@ -9,5 +10,15 @@ export async function getSummary(input: SummarizePropertyIssuesInput) {
     } catch (error) {
         console.error("Error getting summary from AI:", error);
         return { success: false, error: 'Failed to generate summary.' };
+    }
+}
+
+export async function getMaintenanceAnalysis(input: AnalyzeMaintenanceDataInput): Promise<{ success: boolean; analysis?: AnalyzeMaintenanceDataOutput; error?: string; }> {
+    try {
+        const analysis = await analyzeMaintenanceData(input);
+        return { success: true, analysis };
+    } catch (error) {
+        console.error("Error getting analysis from AI:", error);
+        return { success: false, error: 'Failed to generate analysis.' };
     }
 }

@@ -46,3 +46,5 @@ export interface ScheduledInspection {
     type: InspectionType;
     status: 'Agendada' | 'Concluída' | 'Cancelada';
 }
+
+export type { AnalyzeMaintenanceDataInput, AnalyzeMaintenanceDataOutput } from '@/ai/flows/analyze-maintenance-data';
