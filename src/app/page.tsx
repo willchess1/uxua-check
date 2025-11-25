@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -18,8 +18,7 @@ export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('uxua123');
   const [isLoading, setIsLoading] = useState(false);
   const { auth } = useAuth();
   
@@ -107,21 +106,12 @@ export default function Home() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
+                  disabled={true}
                   onKeyPress={handleKeyPress}
                 />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                  type="button"
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
-                </Button>
               </div>
             </div>
             <Button onClick={handleLogin} size="lg" disabled={isLoading}>
