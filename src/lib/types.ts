@@ -33,3 +33,15 @@ export interface User {
     name: string;
     role: UserRole;
 }
+
+export type InspectionType = 'Preventiva' | 'Corretiva' | 'Pós Check-out' | 'Pré Check-in';
+
+export interface ScheduledInspection {
+    id: string;
+    houseId: string;
+    houseName: string;
+    technicianName: string;
+    scheduledDate: Date;
+    type: InspectionType;
+    status: 'Agendada' | 'Concluída' | 'Cancelada';
+}

@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TECHNICIANS, HOUSES, HOUSES_TO_INSPECT, USERS } from '@/lib/data';
 import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
-import { ListChecks, LogOut } from 'lucide-react';
+import { ListChecks, LogOut, CalendarPlus } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -75,6 +75,8 @@ export default function DashboardPage() {
         return 'Bem-vindo, Supervisor. Revise as vistorias pendentes.';
        case 'technician':
         return 'Bem-vindo, Técnico. Selecione uma casa para iniciar.';
+      case 'dev':
+        return 'Bem-vindo, Dev. Acesso total ao sistema.';
       default:
         return 'Bem-vindo! Selecione para iniciar.';
     }
@@ -95,6 +97,9 @@ export default function DashboardPage() {
     }
   }
 
+  const showManagerTools = currentUser?.role === 'manager' || currentUser?.role === 'dev';
+  const showTechnicianTools = currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'dev';
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
@@ -105,61 +110,67 @@ export default function DashboardPage() {
           <CardDescription className="pt-1">{getWelcomeMessage()}</CardDescription>
         </CardHeader>
         <CardContent>
-          {currentUser?.role === 'manager' && (
             <div className="grid gap-4">
-               <Button onClick={() => router.push('/dashboard/select-houses')} size="lg">
-                <ListChecks className="mr-2" />
-                Selecionar Casas para Vistoria
-              </Button>
-               <Button size="lg" variant="secondary" disabled>
-                Ver Relatórios (em breve)
-              </Button>
-            </div>
-          )}
+              {showManagerTools && (
+                <div className="grid gap-4">
+                  <Button onClick={() => router.push('/dashboard/select-houses')} size="lg">
+                    <ListChecks className="mr-2" />
+                    Selecionar Casas para Vistoria
+                  </Button>
+                  <Button onClick={() => router.push('/dashboard/schedule')} size="lg">
+                    <CalendarPlus className="mr-2" />
+                    Agendar Vistorias
+                  </Button>
+                  <Button size="lg" variant="secondary" disabled>
+                    Ver Relatórios (em breve)
+                  </Button>
+                </div>
+              )}
 
-          {(currentUser?.role === 'dev' || currentUser?.role === 'technician' || currentUser?.role === 'supervisor') && (
-            <div className="grid gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="technician-select">Seu Nome</Label>
-                <Select onValueChange={setTechnician} value={technician} disabled={isTechnicianListDisabled}>
-                  <SelectTrigger id="technician-select">
-                    <SelectValue placeholder="-- Selecione seu nome --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TECHNICIANS.map((tech) => (
-                      <SelectItem key={tech} value={tech}>
-                        {tech}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                 <Label htmlFor="house-select">
-                  {getHouseSelectLabel()}
-                </Label>
-                <Select onValueChange={setHouseId} value={houseId}>
-                  <SelectTrigger id="house-select">
-                    <SelectValue placeholder={availableHouses.length > 0 ? "-- Selecione a Casa --" : "Nenhuma casa para vistoria"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableHouses.length > 0 ? (
-                        availableHouses.map((house) => (
-                        <SelectItem key={house.id} value={house.id}>
-                            {house.name}
-                        </SelectItem>
-                        ))
-                    ) : (
-                        <SelectItem value="no-houses" disabled>Nenhuma casa para vistoria</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleStartChecklist} size="lg" disabled={availableHouses.length === 0}>
-                Iniciar Checklist
-              </Button>
+              {showTechnicianTools && (
+                <div className="grid gap-6 pt-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="technician-select">Seu Nome</Label>
+                    <Select onValueChange={setTechnician} value={technician} disabled={isTechnicianListDisabled}>
+                      <SelectTrigger id="technician-select">
+                        <SelectValue placeholder="-- Selecione seu nome --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TECHNICIANS.map((tech) => (
+                          <SelectItem key={tech} value={tech}>
+                            {tech}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="house-select">
+                      {getHouseSelectLabel()}
+                    </Label>
+                    <Select onValueChange={setHouseId} value={houseId}>
+                      <SelectTrigger id="house-select">
+                        <SelectValue placeholder={availableHouses.length > 0 ? "-- Selecione a Casa --" : "Nenhuma casa para vistoria"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableHouses.length > 0 ? (
+                            availableHouses.map((house) => (
+                            <SelectItem key={house.id} value={house.id}>
+                                {house.name}
+                            </SelectItem>
+                            ))
+                        ) : (
+                            <SelectItem value="no-houses" disabled>Nenhuma casa para vistoria</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handleStartChecklist} size="lg" disabled={availableHouses.length === 0}>
+                    Iniciar Checklist
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
         </CardContent>
         <CardFooter className="flex justify-center">
              <Button variant="ghost" onClick={handleLogout}>

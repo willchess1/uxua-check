@@ -1,4 +1,4 @@
-import type { House, ChecklistItem, StatusInfo, ChecklistItemState, User } from './types';
+import type { House, ChecklistItem, StatusInfo, ChecklistItemState, User, ScheduledInspection } from './types';
 
 export const USERS: Record<string, User> = {
     'william@uxua.com': { name: 'William', role: 'dev' },
@@ -35,6 +35,37 @@ export const HOUSES: House[] = [
 
 // MOCK DATA - This will be replaced by a database
 export let HOUSES_TO_INSPECT: string[] = ['casa_eugenia', 'casa_lago']; // Array of house IDs
+
+export const MOCK_SCHEDULED_INSPECTIONS: ScheduledInspection[] = [
+    {
+        id: '1',
+        houseId: 'casa_eugenia',
+        houseName: 'Eugénia',
+        technicianName: 'Keny',
+        scheduledDate: new Date(new Date().setDate(new Date().getDate() + 2)),
+        type: 'Preventiva',
+        status: 'Agendada'
+    },
+    {
+        id: '2',
+        houseId: 'casa_lago',
+        houseName: 'Lago',
+        technicianName: 'Bruno',
+        scheduledDate: new Date(new Date().setDate(new Date().getDate() -1)),
+        type: 'Corretiva',
+        status: 'Concluída'
+    },
+     {
+        id: '3',
+        houseId: 'casa_arvore',
+        houseName: 'Arvore',
+        technicianName: 'Vagner',
+        scheduledDate: new Date(new Date().setDate(new Date().getDate() + 5)),
+        type: 'Pré Check-in',
+        status: 'Agendada'
+    }
+];
+
 
 export const STATUS_MAP: Record<number, StatusInfo> = {
     0: { label: 'Pendente', color: 'bg-gray-400', ring: 'ring-gray-300', icon: '❓', button: 'bg-gray-500 hover:bg-gray-600' },
