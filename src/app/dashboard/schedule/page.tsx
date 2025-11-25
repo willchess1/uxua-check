@@ -10,7 +10,6 @@ import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { HOUSES, TECHNICIANS, MOCK_SCHEDULED_INSPECTIONS, USERS } from '@/lib/data';

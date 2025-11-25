@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/app/components/Logo';
 import { USERS } from '@/lib/data';
-import type { UserRole } from '@/lib/types';
 
 // MOCK LOGIN - This will be replaced with Firebase Auth
 const MOCK_PASSWORDS: Record<string, string> = {

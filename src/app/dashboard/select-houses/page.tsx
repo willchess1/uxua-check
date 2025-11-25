@@ -73,7 +73,7 @@ export default function SelectHousesPage() {
         <CardHeader>
           <CardTitle>Casas para Vistoria</CardTitle>
           <CardDescription>
-            Marque as casas que devem ser incluídas na próxima rodada de vistorias dos supervisores.
+            Marque as casas que devem ser incluídas na próxima rodada de vistorias.
           </CardDescription>
         </CardHeader>
         <CardContent>
