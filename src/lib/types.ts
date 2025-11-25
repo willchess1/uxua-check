@@ -47,4 +47,16 @@ export interface ScheduledInspection {
     status: 'Agendada' | 'Concluída' | 'Cancelada';
 }
 
+export interface CompletedChecklist {
+    id: string;
+    houseId: string;
+    houseName: string;
+    technician: string;
+    completedAt: Date;
+    summary: string;
+    items: ChecklistState;
+    hasPersistentProblems: boolean;
+}
+
+
 export type { AnalyzeMaintenanceDataInput, AnalyzeMaintenanceDataOutput } from '@/ai/flows/analyze-maintenance-data';

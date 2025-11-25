@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
-import { Wand2, X, ChevronRight, Camera, Trash2 } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Wand2, X, ChevronRight, Camera, Trash2, Send } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -14,42 +15,63 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { CHECKLIST_ITEMS, INITIAL_STATE, STATUS_MAP } from '@/lib/data';
 import type { ChecklistItem, ChecklistState, Status } from '@/lib/types';
-import { getSummary } from '@/lib/actions';
+import { getSummary, submitChecklistReport } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 interface ChecklistClientProps {
   houseId: string;
   houseName: string;
   technician: string;
+  inspectionId: string;
 }
-
-const generateInitialState = (): ChecklistState => {
-  const state: ChecklistState = {};
-  CHECKLIST_ITEMS.forEach(item => {
-    state[item.id] = { ...INITIAL_STATE };
-  });
-  return state;
-};
 
 const MAX_PHOTOS = 3;
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 
-export function ChecklistClient({ houseName }: ChecklistClientProps) {
-  const [checklistState, setChecklistState] = useState<ChecklistState>(generateInitialState);
+export function ChecklistClient({ houseId, houseName, technician, inspectionId }: ChecklistClientProps) {
+  const router = useRouter();
+  const [checklistState, setChecklistState] = useState<ChecklistState>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<ChecklistItem | null>(null);
   const [modalStatus, setModalStatus] = useState<Status>(0);
   const [modalNote, setModalNote] = useState('');
   const [modalPhotos, setModalPhotos] = useState<string[]>([]);
+
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [summary, setSummary] = useState({title: '', description: ''});
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const inspectionDocRef = useMemo(() => doc(db, "inspections", inspectionId), [inspectionId]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(inspectionDocRef, (doc) => {
+      if (doc.exists()) {
+        setChecklistState(doc.data().checklistState || {});
+      } else {
+        // If no data, create the doc with initial state
+        const initialState = CHECKLIST_ITEMS.reduce((acc, item) => {
+          acc[item.id] = { ...INITIAL_STATE };
+          return acc;
+        }, {} as ChecklistState);
+        setChecklistState(initialState);
+        setDoc(inspectionDocRef, { houseId, houseName, checklistState: initialState });
+      }
+      setIsDataLoaded(true);
+    });
+    return () => unsubscribe();
+  }, [inspectionDocRef, houseId, houseName]);
+
 
   const handleItemClick = (item: ChecklistItem) => {
     setCurrentItem(item);
@@ -60,7 +82,7 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
     setIsModalOpen(true);
   };
 
-  const handleSaveModal = () => {
+  const handleSaveModal = async () => {
     if (!currentItem) return;
 
     if (modalStatus === 3 && modalNote.trim() === '') {
@@ -76,11 +98,13 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
       ...checklistState,
       [currentItem.id]: {
         status: modalStatus,
-        note: (modalStatus === 3) ? modalNote : '',
+        note: (modalStatus === 3 || modalStatus === 2) ? modalNote : '',
         photos: (modalStatus === 3) ? modalPhotos : [],
       },
     };
-    setChecklistState(newChecklistState);
+    
+    await setDoc(inspectionDocRef, { checklistState: newChecklistState }, { merge: true });
+
     toast({
         title: "Item Atualizado",
         description: `${currentItem.description} foi salvo com sucesso.`,
@@ -88,10 +112,14 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
     setIsModalOpen(false);
   };
 
-  const handleResetChecklist = () => {
-    setChecklistState(generateInitialState());
+  const handleResetChecklist = async () => {
+    const initialState = CHECKLIST_ITEMS.reduce((acc, item) => {
+      acc[item.id] = { ...INITIAL_STATE };
+      return acc;
+    }, {} as ChecklistState);
+    await setDoc(inspectionDocRef, { checklistState: initialState });
     toast({
-        title: `Checklist de ${houseName} Redefinido`,
+        title: `Checklist de ${houseName} Reiniciado`,
         description: "Todos os itens foram marcados como 'Pendente'.",
         variant: 'destructive'
     });
@@ -175,6 +203,31 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
     setModalPhotos(prev => prev.filter((_, i) => i !== index));
   }
 
+  const handleFinishInspection = async () => {
+    setIsSubmitting(true);
+    const result = await submitChecklistReport({
+        houseId,
+        houseName,
+        technician,
+        checklistState,
+    });
+    setIsSubmitting(false);
+
+    if (result.success) {
+        toast({
+            title: "Relatório Enviado com Sucesso!",
+            description: "A gerência foi notificada. Você será redirecionado para o dashboard.",
+        });
+        setTimeout(() => router.push('/dashboard'), 2000);
+    } else {
+        toast({
+            title: "Erro ao Enviar Relatório",
+            description: result.error || "Ocorreu uma falha. Por favor, tente novamente.",
+            variant: "destructive",
+        });
+    }
+  }
+
 
   const categorizedItems = useMemo(() => {
     return CHECKLIST_ITEMS.reduce((acc, item) => {
@@ -183,25 +236,36 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
     }, {} as Record<string, ChecklistItem[]>);
   }, []);
 
+  const allItemsChecked = useMemo(() => {
+    if (Object.keys(checklistState).length < CHECKLIST_ITEMS.length) {
+        return false;
+    }
+    return Object.values(checklistState).every(item => item.status !== 0);
+  }, [checklistState]);
+
+  if (!isDataLoaded) {
+      return <div className="text-center p-10">Carregando dados da vistoria...</div>
+  }
+
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" className="w-full">
-              <X className="mr-2 h-4 w-4"/> Iniciar Nova Vistoria
+              <X className="mr-2 h-4 w-4"/> Reiniciar Vistoria
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta ação limpará todos os status, notas e fotos do checklist para a casa {houseName}.
+                Esta ação limpará todos os status, notas e fotos desta vistoria para a casa {houseName}. Os dados anteriores serão perdidos.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleResetChecklist}>Sim, Iniciar Nova</AlertDialogAction>
+              <AlertDialogAction onClick={handleResetChecklist}>Sim, Reiniciar</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -242,8 +306,8 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
                                     </Badge>
                                 )}
                            </div>
-                          {state.note && state.status === 3 && (
-                            <p className={cn("text-xs mt-2 font-medium italic", 'text-destructive/80')}>
+                          {state.note && (state.status === 3 || state.status === 2) && (
+                            <p className={cn("text-xs mt-2 font-medium italic", state.status === 3 ? 'text-destructive/80' : 'text-indigo-400')}>
                               &quot;{state.note}&quot;
                             </p>
                           )}
@@ -258,6 +322,24 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
           </Card>
         ))}
       </div>
+       
+       <div className="mt-8">
+            <Button 
+                onClick={handleFinishInspection} 
+                disabled={!allItemsChecked || isSubmitting}
+                size="lg"
+                className="w-full"
+            >
+                <Send className="mr-2 h-5 w-5" />
+                {isSubmitting ? 'Enviando Relatório...' : 'Finalizar e Enviar Vistoria'}
+            </Button>
+            {!allItemsChecked && (
+                <p className="text-center text-sm text-muted-foreground mt-2">
+                    Por favor, verifique todos os itens antes de finalizar.
+                </p>
+            )}
+       </div>
+
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-md">
@@ -279,7 +361,7 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
                       onClick={() => setModalStatus(statusKey)}
                       className={cn(
                         "h-auto py-3 justify-start text-left text-sm font-semibold transition-all",
-                         isSelected && "text-gray-900 border-2 border-transparent ring-2 ring-offset-2 ring-offset-background",
+                         isSelected && "border-2 border-transparent ring-2 ring-offset-2 ring-offset-background",
                          isSelected && statusInfo.ring
                       )}
                       style={isSelected ? { backgroundColor: statusInfo.lightColor, color: '#020617'} : {}}
@@ -291,55 +373,60 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
               </div>
             </div>
 
+            {(modalStatus === 3 || modalStatus === 2) && (
+              <div className="space-y-2 animate-in fade-in duration-300">
+                <Label htmlFor="modal-note">
+                  Observação {modalStatus === 3 ? '(Obrigatório)' : '(Opcional)'}
+                </Label>
+                <Textarea
+                  id="modal-note"
+                  value={modalNote}
+                  onChange={(e) => setModalNote(e.target.value)}
+                  placeholder={
+                    modalStatus === 3
+                      ? "Detalhes sobre o problema e qual a ação pendente."
+                      : "Detalhes sobre a solução aplicada."
+                  }
+                  rows={3}
+                />
+              </div>
+            )}
+
             {modalStatus === 3 && (
-              <>
-                <div className="space-y-2 animate-in fade-in duration-300">
-                  <Label htmlFor="modal-note">
-                    Observação (Obrigatório)
-                  </Label>
-                  <Textarea
-                    id="modal-note"
-                    value={modalNote}
-                    onChange={(e) => setModalNote(e.target.value)}
-                    placeholder="Detalhes sobre o problema e qual a ação pendente."
-                    rows={3}
+              <div className="space-y-3 animate-in fade-in duration-300">
+                  <Label className="text-sm font-semibold">📸 Fotos do Problema ({modalPhotos.length}/{MAX_PHOTOS})</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                      {modalPhotos.map((photo, index) => (
+                          <div key={index} className="relative group aspect-square">
+                              <Image src={photo} alt={`Foto ${index + 1}`} fill objectFit="cover" className="rounded-md" />
+                              <Button
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleRemovePhoto(index)}
+                              >
+                                  <Trash2 className="h-4 w-4" />
+                              </Button>
+                          </div>
+                      ))}
+                  </div>
+                  <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={handlePhotoUploadClick}
+                      disabled={modalPhotos.length >= MAX_PHOTOS}
+                  >
+                      <Camera className="mr-2 h-4 w-4" /> Tirar/Escolher Foto
+                  </Button>
+                  <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept="image/*"
+                      capture="environment"
                   />
-                </div>
-                <div className="space-y-3 animate-in fade-in duration-300">
-                    <Label className="text-sm font-semibold">📸 Fotos do Item ({modalPhotos.length}/{MAX_PHOTOS})</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                        {modalPhotos.map((photo, index) => (
-                            <div key={index} className="relative group aspect-square">
-                                <Image src={photo} alt={`Foto ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md" />
-                                <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => handleRemovePhoto(index)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                    <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={handlePhotoUploadClick}
-                        disabled={modalPhotos.length >= MAX_PHOTOS}
-                    >
-                        <Camera className="mr-2 h-4 w-4" /> Tirar/Escolher Foto
-                    </Button>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="image/*"
-                        capture="environment"
-                    />
-                </div>
-              </>
+              </div>
             )}
           </div>
           <DialogFooter>

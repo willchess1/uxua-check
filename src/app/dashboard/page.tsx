@@ -2,16 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { onValue, ref } from 'firebase/database';
+import { rtdb } from '@/lib/firebase/config';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { TECHNICIANS, HOUSES, HOUSES_TO_INSPECT, USERS } from '@/lib/data';
+import { TECHNICIANS, HOUSES, USERS } from '@/lib/data';
 import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
-import { ListChecks, LogOut, CalendarPlus, AreaChart } from 'lucide-react';
+import { ListChecks, LogOut, CalendarPlus, AreaChart, CheckSquare } from 'lucide-react';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -19,34 +22,55 @@ export default function DashboardPage() {
   const [technician, setTechnician] = useState('');
   const [houseId, setHouseId] = useState('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [availableHouses, setAvailableHouses] = useState<House[]>([]);
 
   useEffect(() => {
-    // This is a workaround for client-side auth. Will be replaced by server-side auth.
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      router.push('/');
-      return;
-    }
-    const parsedUser = JSON.parse(storedUser);
-    const fullUser = USERS[parsedUser.email];
-    if (fullUser) {
-        setCurrentUser(fullUser);
-        setTechnician(fullUser.name); // Pre-select user's name
-
-        // Determine which houses to display based on user role
-        if (fullUser.role === 'supervisor' || fullUser.role === 'technician') {
-            setAvailableHouses(HOUSES.filter(h => HOUSES_TO_INSPECT.includes(h.id)));
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && user.email) {
+        const fullUser = USERS[user.email];
+        if (fullUser) {
+          setCurrentUser(fullUser);
+          if (fullUser.role === 'technician' || fullUser.role === 'supervisor' || fullUser.role === 'dev') {
+            setTechnician(fullUser.name); // Pre-select user's name
+          }
         } else {
-            // For 'manager' and 'dev'
-            setAvailableHouses(HOUSES);
+          router.push('/');
         }
-
-    } else {
-         router.push('/');
-    }
-
+      } else {
+        router.push('/');
+      }
+      setAuthChecked(true);
+    });
+    return () => unsubscribe();
   }, [router]);
+  
+  useEffect(() => {
+    if (!currentUser) return;
+  
+    // For manager/dev, show all houses in the selection dropdown
+    if (currentUser.role === 'manager' || currentUser.role === 'dev') {
+        setAvailableHouses(HOUSES);
+        return;
+    }
+  
+    // For technician/supervisor, listen to real-time updates for houses to inspect
+    const housesToInspectRef = ref(rtdb, 'config/housesToInspect');
+    const unsubscribe = onValue(housesToInspectRef, (snapshot) => {
+      const housesToInspectIds = snapshot.val();
+      if (housesToInspectIds && Array.isArray(housesToInspectIds)) {
+        const filteredHouses = HOUSES.filter(h => housesToInspectIds.includes(h.id));
+        setAvailableHouses(filteredHouses);
+      } else {
+        setAvailableHouses([]);
+      }
+    });
+  
+    return () => unsubscribe();
+  
+  }, [currentUser]);
+
 
   const handleStartChecklist = () => {
     if (!technician || !houseId) {
@@ -57,13 +81,16 @@ export default function DashboardPage() {
       });
       return;
     }
-    router.push(`/checklist/${houseId}?technician=${encodeURIComponent(technician)}`);
+    const inspectionId = `${houseId}-${new Date().toISOString()}`;
+    router.push(`/checklist/${houseId}?technician=${encodeURIComponent(technician)}&inspectionId=${encodeURIComponent(inspectionId)}`);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    toast({ title: 'Logout realizado com sucesso.' });
-    router.push('/');
+    const auth = getAuth();
+    signOut(auth).then(() => {
+      toast({ title: 'Logout realizado com sucesso.' });
+      router.push('/');
+    });
   }
 
   const getWelcomeMessage = () => {
@@ -91,7 +118,8 @@ export default function DashboardPage() {
         case 'technician':
             return 'Casa para Vistoria (Pendentes)';
         case 'dev':
-            return 'Casa a Inspecionar (Todas - Dev)';
+        case 'manager':
+            return 'Casa a Inspecionar (Todas)';
         default:
             return 'Selecione a Casa';
     }
@@ -99,6 +127,11 @@ export default function DashboardPage() {
 
   const showManagerTools = currentUser?.role === 'manager' || currentUser?.role === 'dev';
   const showTechnicianTools = currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'dev';
+
+
+  if (!authChecked || !currentUser) {
+      return <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">Carregando...</div>
+  }
 
 
   return (
@@ -120,6 +153,10 @@ export default function DashboardPage() {
                   <Button onClick={() => router.push('/dashboard/schedule')} size="lg">
                     <CalendarPlus className="mr-2" />
                     Agendar Vistorias
+                  </Button>
+                  <Button onClick={() => router.push('/dashboard/completed-reports')} size="lg">
+                    <CheckSquare className="mr-2" />
+                    Vistorias Concluídas
                   </Button>
                   <Button onClick={() => router.push('/dashboard/reports')} size="lg" variant="secondary">
                      <AreaChart className="mr-2" />

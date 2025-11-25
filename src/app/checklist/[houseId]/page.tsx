@@ -14,6 +14,8 @@ type ChecklistPageProps = {
 export default function ChecklistPage({ params, searchParams }: ChecklistPageProps) {
   const house = HOUSES.find((h) => h.id === params.houseId);
   const technician = searchParams.technician || 'Não especificado';
+  const inspectionIdParam = searchParams.inspectionId || `${params.houseId}-${new Date().toISOString().split('T')[0]}`;
+  const inspectionId = Array.isArray(inspectionIdParam) ? inspectionIdParam[0] : inspectionIdParam;
 
   if (!house) {
     notFound();
@@ -25,7 +27,7 @@ export default function ChecklistPage({ params, searchParams }: ChecklistPagePro
         <div className="flex justify-between items-start">
           <h1 className="text-2xl md:text-3xl font-extrabold mb-1">{house.name}</h1>
           <Button asChild variant="ghost" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10 h-auto p-2 -mr-2 -mt-2">
-            <Link href="/">
+            <Link href="/dashboard">
               <ArrowLeft className="mr-2 h-4 w-4" /> Mudar Casa
             </Link>
           </Button>
@@ -37,6 +39,7 @@ export default function ChecklistPage({ params, searchParams }: ChecklistPagePro
         houseId={house.id}
         houseName={house.name}
         technician={Array.isArray(technician) ? technician[0] : technician}
+        inspectionId={inspectionId}
       />
     </div>
   );
