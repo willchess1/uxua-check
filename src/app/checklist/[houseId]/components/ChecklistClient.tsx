@@ -226,7 +226,7 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
                   return (
                     <li key={item.id} onClick={() => handleItemClick(item)} className="cursor-pointer hover:bg-secondary/50 transition-colors">
                       <div className="flex items-center p-4">
-                        <div className={cn("flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg text-white", statusInfo.color)}>
+                        <div className={cn("flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg", statusInfo.color)}>
                             {statusInfo.icon}
                         </div>
                         <div className="ml-4 flex-1">
