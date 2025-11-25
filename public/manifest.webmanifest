@@ -1,0 +1,16 @@
+{
+  "name": "UXUA Manutenção",
+  "short_name": "UXUA Check",
+  "description": "Aplicativo de checklist e manutenção para as casas UXUA.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

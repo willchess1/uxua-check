@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
   title: 'UXUA Housekeeping Checklist',
   description: 'Checklist de Manutenção das Casas UXUA',
+  manifest: '/manifest.webmanifest'
 };
 
 export default function RootLayout({
