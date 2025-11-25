@@ -1,5 +1,7 @@
 import type {NextConfig} from 'next';
 
+require('dotenv').config({ path: './.env' });
+
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
