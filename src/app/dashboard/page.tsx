@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { onValue, ref } from 'firebase/database';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
@@ -10,11 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { TECHNICIANS, HOUSES, USERS } from '@/lib/data';
+import { TECHNICIANS, HOUSES, USERS, HOUSES_TO_INSPECT } from '@/lib/data';
 import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
 import { ListChecks, LogOut, CalendarPlus, AreaChart, CheckSquare } from 'lucide-react';
-import { auth, rtdb } from '@/lib/firebase/config';
+import { auth } from '@/lib/firebase/config';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -58,19 +57,9 @@ export default function DashboardPage() {
         return;
     }
   
-    // For technician/supervisor, listen to real-time updates for houses to inspect
-    const housesToInspectRef = ref(rtdb, 'config/housesToInspect');
-    const unsubscribe = onValue(housesToInspectRef, (snapshot) => {
-      const housesToInspectIds = snapshot.val();
-      if (housesToInspectIds && Array.isArray(housesToInspectIds)) {
-        const filteredHouses = HOUSES.filter(h => housesToInspectIds.includes(h.id));
-        setAvailableHouses(filteredHouses);
-      } else {
-        setAvailableHouses([]);
-      }
-    });
-  
-    return () => unsubscribe();
+    // For technician/supervisor, show only the houses marked for inspection
+    const housesToInspect = HOUSES.filter(h => HOUSES_TO_INSPECT.includes(h.id));
+    setAvailableHouses(housesToInspect);
   
   }, [currentUser]);
 
@@ -119,7 +108,6 @@ export default function DashboardPage() {
         case 'supervisor':
         case 'technician':
             return 'Casa para Vistoria (Pendentes)';
-        case 'dev':
         case 'manager':
             return 'Casa a Inspecionar (Todas)';
         default:
