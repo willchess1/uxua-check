@@ -277,10 +277,11 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
                       variant={isSelected ? 'default' : 'outline'}
                       onClick={() => setModalStatus(statusKey)}
                       className={cn(
-                        "h-auto py-3 justify-start text-left text-sm font-semibold",
-                        isSelected && `${statusInfo.color} text-white border-transparent hover:${statusInfo.color} focus:${statusInfo.color}`
+                        "h-auto py-3 justify-start text-left text-sm font-semibold transition-all",
+                        isSelected && `text-gray-900 border-2 border-transparent ring-2 ring-offset-2 ring-offset-background`,
+                        isSelected && statusInfo.ring
                       )}
-                      style={isSelected ? { backgroundColor: `hsl(var(--${statusInfo.color.replace('bg-', '')}-500))` } : {}}
+                      style={isSelected ? { backgroundColor: statusInfo.lightColor } : {}}
                     >
                       <span className="mr-3 text-lg">{statusInfo.icon}</span> {statusInfo.label}
                     </Button>

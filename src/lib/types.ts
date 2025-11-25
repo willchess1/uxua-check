@@ -6,6 +6,7 @@ export interface StatusInfo {
   ring: string;
   icon: string;
   button: string;
+  lightColor: string;
 }
 
 export interface ChecklistItem {

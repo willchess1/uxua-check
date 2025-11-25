@@ -68,10 +68,10 @@ export const MOCK_SCHEDULED_INSPECTIONS: ScheduledInspection[] = [
 
 
 export const STATUS_MAP: Record<number, StatusInfo> = {
-    0: { label: 'Pendente', color: 'bg-gray-400', ring: 'ring-gray-300', icon: '❓', button: 'bg-gray-500 hover:bg-gray-600' },
-    1: { label: 'OK (Verificado)', color: 'bg-green-500', ring: 'ring-green-300', icon: '✅', button: 'bg-green-600 hover:bg-green-700' },
-    2: { label: 'Problema Resolvido', color: 'bg-indigo-500', ring: 'ring-indigo-300', icon: '🛠️', button: 'bg-indigo-600 hover:bg-indigo-700' },
-    3: { label: 'Problema Persistente', color: 'bg-red-500', ring: 'ring-red-300', icon: '🚨', button: 'bg-red-600 hover:bg-red-700' },
+    0: { label: 'Pendente', color: 'bg-gray-400', ring: 'ring-gray-300', icon: '❓', button: 'bg-gray-500 hover:bg-gray-600', lightColor: '#d1d5db' },
+    1: { label: 'OK (Verificado)', color: 'bg-green-500', ring: 'ring-green-400', icon: '✅', button: 'bg-green-600 hover:bg-green-700', lightColor: '#4ade80' },
+    2: { label: 'Problema Resolvido', color: 'bg-indigo-500', ring: 'ring-indigo-400', icon: '🛠️', button: 'bg-indigo-600 hover:bg-indigo-700', lightColor: '#818cf8' },
+    3: { label: 'Problema Persistente', color: 'bg-red-500', ring: 'ring-red-400', icon: '🚨', button: 'bg-red-600 hover:bg-red-700', lightColor: '#f87171' },
 };
 
 export const INITIAL_STATE: ChecklistItemState = { status: 0, note: '', photos: [] };
