@@ -7,13 +7,13 @@ import { collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/fire
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, CheckCircle, AlertTriangle, FileText, ChevronRight } from 'lucide-react';
+import { onAuthStateChanged } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { USERS } from '@/lib/data';
 import type { User, CompletedChecklist } from '@/lib/types';
-import { onAuthStateChanged } from 'firebase/auth';
 import { useAuth, useDb } from '@/lib/firebase/provider';
 import { Badge } from '@/components/ui/badge';
 import {

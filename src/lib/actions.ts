@@ -6,7 +6,8 @@ import { doc, setDoc, getFirestore } from "firebase/firestore";
 import { getFirebaseApp } from './firebase/config';
 import type { ChecklistState, CompletedChecklist } from './types';
 
-// Get a Firestore instance
+// HACK: This is a workaround for a bug in server actions.
+// We need to initialize the app here to get a Firestore instance.
 const app = getFirebaseApp();
 const db = getFirestore(app);
 
