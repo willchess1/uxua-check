@@ -13,8 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { USERS } from '@/lib/data';
 import type { User, CompletedChecklist } from '@/lib/types';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { db } from '@/lib/firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
+import { useAuth, useDb } from '@/lib/firebase/provider';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -30,13 +30,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function CompletedReportsPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { auth } = useAuth();
+  const { db } = useDb();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [reports, setReports] = useState<CompletedChecklist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<CompletedChecklist | null>(null);
 
   useEffect(() => {
-    const auth = getAuth();
+    if (!auth) return;
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user?.email) {
         const fullUser = USERS[user.email];
@@ -52,17 +54,16 @@ export default function CompletedReportsPage() {
     });
 
     return () => unsubscribeAuth();
-  }, [router, toast]);
+  }, [auth, router, toast]);
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !db) return;
 
     const q = query(collection(db, "completedChecklists"), orderBy("completedAt", "desc"));
     const unsubscribeReports = onSnapshot(q, (querySnapshot) => {
       const fetchedReports: CompletedChecklist[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Convert Firestore Timestamp to JS Date
         const report: CompletedChecklist = {
           ...data,
           completedAt: (data.completedAt as Timestamp).toDate(),
@@ -78,7 +79,7 @@ export default function CompletedReportsPage() {
     });
 
     return () => unsubscribeReports();
-  }, [currentUser, toast]);
+  }, [currentUser, db, toast]);
 
   if (!currentUser) {
     return (

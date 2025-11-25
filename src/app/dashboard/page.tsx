@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { TECHNICIANS, HOUSES, USERS, HOUSES_TO_INSPECT } from '@/lib/data';
 import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
 import { ListChecks, LogOut, CalendarPlus, AreaChart, CheckSquare } from 'lucide-react';
-import { auth } from '@/lib/firebase/config';
+import { useAuth } from '@/lib/firebase/provider';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -23,41 +23,40 @@ export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [availableHouses, setAvailableHouses] = useState<House[]>([]);
+  const { auth } = useAuth();
 
   useEffect(() => {
+    if (!auth) return;
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && user.email) {
         const fullUser = USERS[user.email];
         if (fullUser) {
           setCurrentUser(fullUser);
           if (fullUser.role === 'technician' || fullUser.role === 'supervisor' || fullUser.role === 'dev') {
-            setTechnician(fullUser.name); // Pre-select user's name
+            setTechnician(fullUser.name);
           }
         } else {
-          // User authenticated with Firebase but not in our USERS list
           toast({ title: 'Acesso Não Permitido', variant: 'destructive' });
-          signOut(auth); // Log out the user
+          signOut(auth);
           router.push('/');
         }
       } else {
-        // No user is signed in.
         router.push('/');
       }
       setAuthChecked(true);
     });
     return () => unsubscribe();
-  }, [router, toast]);
+  }, [auth, router, toast]);
   
   useEffect(() => {
     if (!currentUser) return;
   
-    // For manager/dev, show all houses in the selection dropdown
     if (currentUser.role === 'manager' || currentUser.role === 'dev') {
         setAvailableHouses(HOUSES);
         return;
     }
   
-    // For technician/supervisor, show only the houses marked for inspection
     const housesToInspect = HOUSES.filter(h => HOUSES_TO_INSPECT.includes(h.id));
     setAvailableHouses(housesToInspect);
   
@@ -73,11 +72,11 @@ export default function DashboardPage() {
       });
       return;
     }
-    // O ID da inspeção será gerado no lado do cliente para evitar erros de hidratação
     router.push(`/checklist/${houseId}?technician=${encodeURIComponent(technician)}`);
   };
 
   const handleLogout = () => {
+    if (!auth) return;
     signOut(auth).then(() => {
       toast({ title: 'Logout realizado com sucesso.' });
       router.push('/');

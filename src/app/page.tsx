@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/app/components/Logo';
 import { USERS } from '@/lib/data';
-import { app } from '@/lib/firebase/config'; // Import firebase app
+import { useAuth } from '@/lib/firebase/provider';
 
 export default function Home() {
   const router = useRouter();
@@ -21,9 +21,20 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { auth } = useAuth();
   
   const handleLogin = async () => {
     setIsLoading(true);
+
+    if (!auth) {
+        toast({
+            title: 'Erro de Autenticação',
+            description: 'O serviço de autenticação não está disponível. Tente novamente mais tarde.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+    }
 
     if (!email || !password) {
       toast({
@@ -36,7 +47,6 @@ export default function Home() {
     }
 
     try {
-      const auth = getAuth(app);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const userEmail = user.email;
@@ -48,7 +58,6 @@ export default function Home() {
           description: `Bem-vindo, ${userInfo.name}! Redirecionando...`,
         });
         
-        // No need to store user in local storage, auth state will be managed by Firebase
         router.push('/dashboard');
       } else {
         throw new Error("Usuário não encontrado em nossa lista de permissões.");

@@ -19,7 +19,7 @@ import { getSummary, submitChecklistReport } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { useDb } from '@/lib/firebase/provider';
 
 interface ChecklistClientProps {
   houseId: string;
@@ -35,6 +35,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export function ChecklistClient({ houseId, houseName, technician, initialInspectionId }: ChecklistClientProps) {
   const router = useRouter();
+  const { db } = useDb();
   const [checklistState, setChecklistState] = useState<ChecklistState>({});
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   
@@ -55,7 +56,6 @@ export function ChecklistClient({ houseId, houseName, technician, initialInspect
   const { toast } = useToast();
   
   useEffect(() => {
-    // Garantir que a geração do ID seja feita apenas no cliente para evitar hydration mismatch.
     if (initialInspectionId) {
       setInspectionId(initialInspectionId);
     } else {
@@ -64,18 +64,17 @@ export function ChecklistClient({ houseId, houseName, technician, initialInspect
   }, [initialInspectionId, houseId]);
   
   const inspectionDocRef = useMemo(() => {
-    if (!inspectionId) return null;
+    if (!inspectionId || !db) return null;
     return doc(db, "inspections", inspectionId);
-  }, [inspectionId]);
+  }, [inspectionId, db]);
 
   useEffect(() => {
-    if (!inspectionDocRef) return;
+    if (!inspectionDocRef || !db) return;
     
     const unsubscribe = onSnapshot(inspectionDocRef, (doc) => {
       if (doc.exists()) {
         setChecklistState(doc.data().checklistState || {});
       } else {
-        // If no data, create the doc with initial state
         const initialState = CHECKLIST_ITEMS.reduce((acc, item) => {
           acc[item.id] = { ...INITIAL_STATE };
           return acc;
@@ -86,7 +85,7 @@ export function ChecklistClient({ houseId, houseName, technician, initialInspect
       setIsDataLoaded(true);
     });
     return () => unsubscribe();
-  }, [inspectionDocRef, houseId, houseName]);
+  }, [inspectionDocRef, houseId, houseName, db]);
 
 
   const handleItemClick = (item: ChecklistItem) => {
