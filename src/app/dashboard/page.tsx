@@ -108,6 +108,7 @@ export default function DashboardPage() {
         case 'technician':
             return 'Casa para Vistoria (Pendentes)';
         case 'manager':
+        case 'dev':
             return 'Casa a Inspecionar (Todas)';
         default:
             return 'Selecione a Casa';
