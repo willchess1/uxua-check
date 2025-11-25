@@ -76,8 +76,8 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
       ...checklistState,
       [currentItem.id]: {
         status: modalStatus,
-        note: (modalStatus === 2 || modalStatus === 3) ? modalNote : '',
-        photos: modalPhotos,
+        note: (modalStatus === 3) ? modalNote : '',
+        photos: (modalStatus === 3) ? modalPhotos : [],
       },
     };
     setChecklistState(newChecklistState);
@@ -242,8 +242,8 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
                                     </Badge>
                                 )}
                            </div>
-                          {state.note && (state.status === 2 || state.status === 3) && (
-                            <p className={cn("text-xs mt-2 font-medium italic", state.status === 3 ? 'text-destructive/80' : 'text-muted-foreground')}>
+                          {state.note && state.status === 3 && (
+                            <p className={cn("text-xs mt-2 font-medium italic", 'text-destructive/80')}>
                               &quot;{state.note}&quot;
                             </p>
                           )}
@@ -284,56 +284,56 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
               </div>
             </div>
 
-            {(modalStatus === 2 || modalStatus === 3) && (
-              <div className="space-y-2 animate-in fade-in duration-300">
-                <Label htmlFor="modal-note">
-                  Observação {modalStatus === 3 ? '(Obrigatório)' : '(Opcional)'}
-                </Label>
-                <Textarea
-                  id="modal-note"
-                  value={modalNote}
-                  onChange={(e) => setModalNote(e.target.value)}
-                  placeholder={modalStatus === 3 ? "Detalhes sobre o problema e qual a ação pendente." : "Detalhes sobre a resolução."}
-                  rows={3}
-                />
-              </div>
-            )}
-            
-            <div className="space-y-3">
-                <Label className="text-sm font-semibold">📸 Fotos do Item ({modalPhotos.length}/{MAX_PHOTOS})</Label>
-                <div className="grid grid-cols-3 gap-2">
-                    {modalPhotos.map((photo, index) => (
-                        <div key={index} className="relative group aspect-square">
-                            <Image src={photo} alt={`Foto ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md" />
-                            <Button
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleRemovePhoto(index)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
+            {modalStatus === 3 && (
+              <>
+                <div className="space-y-2 animate-in fade-in duration-300">
+                  <Label htmlFor="modal-note">
+                    Observação (Obrigatório)
+                  </Label>
+                  <Textarea
+                    id="modal-note"
+                    value={modalNote}
+                    onChange={(e) => setModalNote(e.target.value)}
+                    placeholder="Detalhes sobre o problema e qual a ação pendente."
+                    rows={3}
+                  />
                 </div>
-                <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={handlePhotoUploadClick}
-                    disabled={modalPhotos.length >= MAX_PHOTOS}
-                >
-                    <Camera className="mr-2 h-4 w-4" /> Tirar/Escolher Foto
-                </Button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept="image/*"
-                    capture="environment"
-                />
-            </div>
-
+                <div className="space-y-3 animate-in fade-in duration-300">
+                    <Label className="text-sm font-semibold">📸 Fotos do Item ({modalPhotos.length}/{MAX_PHOTOS})</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {modalPhotos.map((photo, index) => (
+                            <div key={index} className="relative group aspect-square">
+                                <Image src={photo} alt={`Foto ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md" />
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => handleRemovePhoto(index)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                    <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={handlePhotoUploadClick}
+                        disabled={modalPhotos.length >= MAX_PHOTOS}
+                    >
+                        <Camera className="mr-2 h-4 w-4" /> Tirar/Escolher Foto
+                    </Button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/*"
+                        capture="environment"
+                    />
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
