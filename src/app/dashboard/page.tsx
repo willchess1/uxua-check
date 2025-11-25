@@ -14,7 +14,7 @@ import { TECHNICIANS, HOUSES, USERS } from '@/lib/data';
 import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
 import { ListChecks, LogOut, CalendarPlus, AreaChart, CheckSquare } from 'lucide-react';
-import { rtdb } from '@/lib/firebase/config';
+import { auth, rtdb } from '@/lib/firebase/config';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -26,7 +26,6 @@ export default function DashboardPage() {
   const [availableHouses, setAvailableHouses] = useState<House[]>([]);
 
   useEffect(() => {
-    const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && user.email) {
         const fullUser = USERS[user.email];
@@ -85,12 +84,11 @@ export default function DashboardPage() {
       });
       return;
     }
-    const inspectionId = `${houseId}-${new Date().toISOString()}`;
-    router.push(`/checklist/${houseId}?technician=${encodeURIComponent(technician)}&inspectionId=${encodeURIComponent(inspectionId)}`);
+    // O ID da inspeção será gerado no lado do cliente para evitar erros de hidratação
+    router.push(`/checklist/${houseId}?technician=${encodeURIComponent(technician)}`);
   };
 
   const handleLogout = () => {
-    const auth = getAuth();
     signOut(auth).then(() => {
       toast({ title: 'Logout realizado com sucesso.' });
       router.push('/');

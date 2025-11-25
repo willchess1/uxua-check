@@ -25,7 +25,7 @@ interface ChecklistClientProps {
   houseId: string;
   houseName: string;
   technician: string;
-  inspectionId: string;
+  initialInspectionId?: string | null;
 }
 
 const MAX_PHOTOS = 3;
@@ -33,10 +33,12 @@ const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 
-export function ChecklistClient({ houseId, houseName, technician, inspectionId }: ChecklistClientProps) {
+export function ChecklistClient({ houseId, houseName, technician, initialInspectionId }: ChecklistClientProps) {
   const router = useRouter();
   const [checklistState, setChecklistState] = useState<ChecklistState>({});
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  
+  const [inspectionId, setInspectionId] = useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<ChecklistItem | null>(null);
@@ -51,10 +53,24 @@ export function ChecklistClient({ houseId, houseName, technician, inspectionId }
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  const inspectionDocRef = useMemo(() => doc(db, "inspections", inspectionId), [inspectionId]);
+  
+  useEffect(() => {
+    // Garantir que a geração do ID seja feita apenas no cliente para evitar hydration mismatch.
+    if (initialInspectionId) {
+      setInspectionId(initialInspectionId);
+    } else {
+      setInspectionId(`${houseId}-${new Date().toISOString()}`);
+    }
+  }, [initialInspectionId, houseId]);
+  
+  const inspectionDocRef = useMemo(() => {
+    if (!inspectionId) return null;
+    return doc(db, "inspections", inspectionId);
+  }, [inspectionId]);
 
   useEffect(() => {
+    if (!inspectionDocRef) return;
+    
     const unsubscribe = onSnapshot(inspectionDocRef, (doc) => {
       if (doc.exists()) {
         setChecklistState(doc.data().checklistState || {});
@@ -83,7 +99,7 @@ export function ChecklistClient({ houseId, houseName, technician, inspectionId }
   };
 
   const handleSaveModal = async () => {
-    if (!currentItem) return;
+    if (!currentItem || !inspectionDocRef) return;
 
     if (modalStatus === 3 && modalNote.trim() === '') {
       toast({
@@ -113,6 +129,7 @@ export function ChecklistClient({ houseId, houseName, technician, inspectionId }
   };
 
   const handleResetChecklist = async () => {
+    if (!inspectionDocRef) return;
     const initialState = CHECKLIST_ITEMS.reduce((acc, item) => {
       acc[item.id] = { ...INITIAL_STATE };
       return acc;
@@ -243,7 +260,7 @@ export function ChecklistClient({ houseId, houseName, technician, inspectionId }
     return Object.values(checklistState).every(item => item.status !== 0);
   }, [checklistState]);
 
-  if (!isDataLoaded) {
+  if (!isDataLoaded || !inspectionId) {
       return <div className="text-center p-10">Carregando dados da vistoria...</div>
   }
 

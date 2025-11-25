@@ -14,8 +14,8 @@ type ChecklistPageProps = {
 export default function ChecklistPage({ params, searchParams }: ChecklistPageProps) {
   const house = HOUSES.find((h) => h.id === params.houseId);
   const technician = searchParams.technician || 'Não especificado';
-  const inspectionIdParam = searchParams.inspectionId || `${params.houseId}-${new Date().toISOString().split('T')[0]}`;
-  const inspectionId = Array.isArray(inspectionIdParam) ? inspectionIdParam[0] : inspectionIdParam;
+  // A lógica do inspectionId foi movida para o ChecklistClient para evitar erros de hidratação.
+  const inspectionId = searchParams.inspectionId;
 
   if (!house) {
     notFound();
@@ -39,7 +39,7 @@ export default function ChecklistPage({ params, searchParams }: ChecklistPagePro
         houseId={house.id}
         houseName={house.name}
         technician={Array.isArray(technician) ? technician[0] : technician}
-        inspectionId={inspectionId}
+        initialInspectionId={Array.isArray(inspectionId) ? inspectionId[0] : inspectionId}
       />
     </div>
   );
