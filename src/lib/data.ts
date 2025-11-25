@@ -1,6 +1,6 @@
 import type { House, ChecklistItem, StatusInfo, ChecklistItemState } from './types';
 
-export const TECHNICIANS: string[] = ['José Silva', 'Maria Almeida', 'Pedro Santos', 'Carlos Ribeiro', 'Outro (Anotar em Observação)'];
+export const TECHNICIANS: string[] = ['William', 'Viviane', 'Thiago', 'Vagner', 'Keny', 'Bruno', 'Romario', 'Outro (Anotar em Observação)'];
         
 export const HOUSES: House[] = [
     { id: 'casa_eugenia', name: 'Eugénia' },
