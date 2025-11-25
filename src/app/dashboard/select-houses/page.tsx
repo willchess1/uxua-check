@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { ArrowLeft, ListChecks } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { HOUSES, HOUSES_TO_INSPECT } from '@/lib/data';
+import { HOUSES, HOUSES_TO_INSPECT, USERS } from '@/lib/data';
 import type { User } from '@/lib/types';
-import Link from 'next/link';
+
 
 export default function SelectHousesPage() {
   const router = useRouter();
@@ -19,22 +22,21 @@ export default function SelectHousesPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      router.push('/');
-      return;
-    }
-    const parsedUser = JSON.parse(storedUser);
-    if (parsedUser.role !== 'manager' && parsedUser.role !== 'dev') {
-        toast({
-            title: 'Acesso Negado',
-            description: 'Você não tem permissão para acessar esta página.',
-            variant: 'destructive',
-        });
-        router.push('/dashboard');
-        return;
-    }
-    setCurrentUser(parsedUser);
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (user?.email) {
+          const fullUser = USERS[user.email];
+          if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
+              setCurrentUser(fullUser);
+          } else {
+              toast({ title: 'Acesso Negado', variant: 'destructive' });
+              router.push('/dashboard');
+          }
+      } else if (!user) {
+          router.push('/');
+      }
+    });
+    return () => unsubscribe();
   }, [router, toast]);
 
   const handleHouseToggle = (houseId: string) => {
@@ -55,7 +57,7 @@ export default function SelectHousesPage() {
   };
 
   if (!currentUser) {
-    return null; // or a loading spinner
+    return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
   }
 
   return (

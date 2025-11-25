@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, Calendar as CalendarIcon, CalendarPlus, X } from 'lucide-react';
 import * as React from 'react';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,24 +39,21 @@ export default function SchedulePage() {
 
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      router.push('/');
-      return;
-    }
-    const parsedUser = JSON.parse(storedUser);
-    const fullUser = USERS[parsedUser.email];
-    
-    if (fullUser.role !== 'manager' && fullUser.role !== 'dev') {
-        toast({
-            title: 'Acesso Negado',
-            description: 'Você não tem permissão para acessar esta página.',
-            variant: 'destructive',
-        });
-        router.push('/dashboard');
-        return;
-    }
-    setCurrentUser(fullUser);
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, user => {
+        if (user?.email) {
+            const fullUser = USERS[user.email];
+            if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
+                setCurrentUser(fullUser);
+            } else {
+                toast({ title: 'Acesso Negado', variant: 'destructive' });
+                router.push('/dashboard');
+            }
+        } else if (!user) {
+            router.push('/');
+        }
+    });
+    return () => unsubscribe();
   }, [router, toast]);
 
   const handleScheduleInspection = () => {
@@ -124,7 +122,7 @@ export default function SchedulePage() {
 
 
   if (!currentUser) {
-    return null; // or a loading spinner
+    return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
   }
 
   return (

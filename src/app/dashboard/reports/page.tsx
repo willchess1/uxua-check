@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BarChart, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Bar } from 'recharts';
 import { ArrowLeft, Bot, Activity } from 'lucide-react';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +14,7 @@ import { USERS, MOCK_CHECKLIST_DATA } from '@/lib/data';
 import type { User } from '@/lib/types';
 import { performMaintenanceAnalysis, AnalyzeMaintenanceDataOutput } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
+
 
 const PIE_COLORS = { ok: '#16a34a', pendente: '#facc15', resolvido: '#4f46e5', persistente: '#dc2626' };
 
@@ -23,24 +26,21 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      router.push('/');
-      return;
-    }
-    const parsedUser = JSON.parse(storedUser);
-    const fullUser = USERS[parsedUser.email];
-    
-    if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
-       setCurrentUser(fullUser);
-    } else {
-        toast({
-            title: 'Acesso Negado',
-            description: 'Você não tem permissão para acessar esta página.',
-            variant: 'destructive',
-        });
-        router.push('/dashboard');
-    }
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, user => {
+        if (user?.email) {
+            const fullUser = USERS[user.email];
+            if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
+                setCurrentUser(fullUser);
+            } else {
+                toast({ title: 'Acesso Negado', variant: 'destructive' });
+                router.push('/dashboard');
+            }
+        } else if (!user) {
+            router.push('/');
+        }
+    });
+    return () => unsubscribe();
   }, [router, toast]);
   
   const handleGenerateReport = async () => {

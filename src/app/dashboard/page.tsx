@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { onValue, ref } from 'firebase/database';
-import { rtdb } from '@/lib/firebase/config';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { TECHNICIANS, HOUSES, USERS } from '@/lib/data';
 import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
 import { ListChecks, LogOut, CalendarPlus, AreaChart, CheckSquare } from 'lucide-react';
-import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { rtdb } from '@/lib/firebase/config';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -36,15 +36,19 @@ export default function DashboardPage() {
             setTechnician(fullUser.name); // Pre-select user's name
           }
         } else {
+          // User authenticated with Firebase but not in our USERS list
+          toast({ title: 'Acesso Não Permitido', variant: 'destructive' });
+          signOut(auth); // Log out the user
           router.push('/');
         }
       } else {
+        // No user is signed in.
         router.push('/');
       }
       setAuthChecked(true);
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [router, toast]);
   
   useEffect(() => {
     if (!currentUser) return;

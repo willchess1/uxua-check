@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,17 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/app/components/Logo';
 import { USERS } from '@/lib/data';
-
-// MOCK LOGIN - This will be replaced with Firebase Auth
-const MOCK_PASSWORDS: Record<string, string> = {
-  'william@uxua.com': 'dev@uxua2024',
-  'viviane@uxua.com': 'uxua2024',
-  'thiago@uxua.com': 'uxua2024',
-  'vagner@uxua.com': 'uxua2024',
-  'keny@uxua.com': 'uxua2024',
-  'bruno@uxua.com': 'uxua2024',
-  'romario@uxua.com': 'uxua2024',
-};
+import { app } from '@/lib/firebase/config'; // Import firebase app
 
 export default function Home() {
   const router = useRouter();
@@ -31,13 +22,7 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Clear session on component mount
-  useEffect(() => {
-    localStorage.removeItem('user');
-  }, []);
-
-
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setIsLoading(true);
 
     if (!email || !password) {
@@ -50,31 +35,34 @@ export default function Home() {
       return;
     }
 
-    // MOCK AUTHENTICATION
-    setTimeout(() => {
-      const userEmail = email.toLowerCase();
-      const user = USERS[userEmail];
-      
-      if (user && MOCK_PASSWORDS[userEmail] === password) {
+    try {
+      const auth = getAuth(app);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const userEmail = user.email;
+
+      if (userEmail && USERS[userEmail]) {
+        const userInfo = USERS[userEmail];
         toast({
           title: 'Login bem-sucedido!',
-          description: `Bem-vindo, ${user.name}! Redirecionando...`,
+          description: `Bem-vindo, ${userInfo.name}! Redirecionando...`,
         });
-
-        // In a real app, you would get a session/token here.
-        // For now, we store user info in localStorage.
-        localStorage.setItem('user', JSON.stringify({ email: userEmail, name: user.name, role: user.role }));
         
+        // No need to store user in local storage, auth state will be managed by Firebase
         router.push('/dashboard');
       } else {
-        toast({
-          title: 'Credenciais Inválidas',
-          description: 'Verifique seu e-mail e senha e tente novamente.',
-          variant: 'destructive',
-        });
+        throw new Error("Usuário não encontrado em nossa lista de permissões.");
       }
+
+    } catch (error) {
+      console.error("Firebase Auth Error:", error);
+      toast({
+        title: 'Credenciais Inválidas',
+        description: 'Verifique seu e-mail e senha e tente novamente.',
+        variant: 'destructive',
+      });
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
