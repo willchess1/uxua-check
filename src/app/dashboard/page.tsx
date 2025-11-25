@@ -34,10 +34,11 @@ export default function DashboardPage() {
         setCurrentUser(fullUser);
         setTechnician(fullUser.name); // Pre-select user's name
 
-        // Determine which houses to display
-        if (fullUser.role === 'supervisor') {
+        // Determine which houses to display based on user role
+        if (fullUser.role === 'supervisor' || fullUser.role === 'technician') {
             setAvailableHouses(HOUSES.filter(h => HOUSES_TO_INSPECT.includes(h.id)));
         } else {
+            // For 'manager' and 'dev'
             setAvailableHouses(HOUSES);
         }
 
@@ -72,12 +73,28 @@ export default function DashboardPage() {
         return 'Bem-vinda, Gerente. O que faremos hoje?';
       case 'supervisor':
         return 'Bem-vindo, Supervisor. Revise as vistorias pendentes.';
+       case 'technician':
+        return 'Bem-vindo, Técnico. Selecione uma casa para iniciar.';
       default:
-        return 'Selecione para Iniciar a Vistoria';
+        return 'Bem-vindo! Selecione para iniciar.';
     }
   };
+  
+  const isTechnicianListDisabled = currentUser?.role !== 'dev' && currentUser?.role !== 'manager';
+  
+  const getHouseSelectLabel = () => {
+    if (!currentUser) return 'Casa a Inspecionar';
+    switch (currentUser.role) {
+        case 'supervisor':
+        case 'technician':
+            return 'Casa para Vistoria (Pendentes)';
+        case 'dev':
+            return 'Casa a Inspecionar (Todas - Dev)';
+        default:
+            return 'Selecione a Casa';
+    }
+  }
 
-  const isSelectionDisabled = currentUser?.role === 'supervisor';
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
@@ -94,7 +111,7 @@ export default function DashboardPage() {
                 <ListChecks className="mr-2" />
                 Selecionar Casas para Vistoria
               </Button>
-               <Button size="lg" variant="secondary">
+               <Button size="lg" variant="secondary" disabled>
                 Ver Relatórios (em breve)
               </Button>
             </div>
@@ -104,7 +121,7 @@ export default function DashboardPage() {
             <div className="grid gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="technician-select">Seu Nome</Label>
-                <Select onValueChange={setTechnician} value={technician} disabled={isSelectionDisabled}>
+                <Select onValueChange={setTechnician} value={technician} disabled={isTechnicianListDisabled}>
                   <SelectTrigger id="technician-select">
                     <SelectValue placeholder="-- Selecione seu nome --" />
                   </SelectTrigger>
@@ -119,11 +136,11 @@ export default function DashboardPage() {
               </div>
               <div className="grid gap-2">
                  <Label htmlFor="house-select">
-                  {currentUser?.role === 'supervisor' ? 'Casa a Inspecionar (Pendentes)' : 'Casa a Inspecionar'}
+                  {getHouseSelectLabel()}
                 </Label>
                 <Select onValueChange={setHouseId} value={houseId}>
                   <SelectTrigger id="house-select">
-                    <SelectValue placeholder={availableHouses.length > 0 ? "-- Selecione a Casa --" : "Nenhuma casa pendente"} />
+                    <SelectValue placeholder={availableHouses.length > 0 ? "-- Selecione a Casa --" : "Nenhuma casa para vistoria"} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableHouses.length > 0 ? (
