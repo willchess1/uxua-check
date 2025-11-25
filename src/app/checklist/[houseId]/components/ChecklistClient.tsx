@@ -268,19 +268,24 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
             <div>
               <Label className="text-sm font-semibold mb-3 block">Selecione o Status</Label>
               <div className="grid grid-cols-2 gap-3">
-                {(Object.keys(STATUS_MAP) as unknown as (keyof typeof STATUS_MAP)[]).map((statusKey) => (
-                  <Button
-                    key={statusKey}
-                    variant={modalStatus === statusKey ? 'default' : 'outline'}
-                    onClick={() => setModalStatus(statusKey)}
-                    className={cn(
-                      "h-auto py-3 justify-start text-sm font-semibold",
-                      modalStatus === statusKey && `${STATUS_MAP[statusKey].color} text-white border-transparent hover:${STATUS_MAP[statusKey].color}`
-                    )}
-                  >
-                    <span className="mr-3 text-lg">{STATUS_MAP[statusKey].icon}</span> {STATUS_MAP[statusKey].label}
-                  </Button>
-                ))}
+                {(Object.keys(STATUS_MAP) as unknown as (keyof typeof STATUS_MAP)[]).map((statusKey) => {
+                  const statusInfo = STATUS_MAP[statusKey];
+                  const isSelected = modalStatus === statusKey;
+                  return (
+                    <Button
+                      key={statusKey}
+                      variant={isSelected ? 'default' : 'outline'}
+                      onClick={() => setModalStatus(statusKey)}
+                      className={cn(
+                        "h-auto py-3 justify-start text-left text-sm font-semibold",
+                        isSelected && `${statusInfo.color} text-white border-transparent hover:${statusInfo.color} focus:${statusInfo.color}`
+                      )}
+                      style={isSelected ? { backgroundColor: `hsl(var(--${statusInfo.color.replace('bg-', '')}-500))` } : {}}
+                    >
+                      <span className="mr-3 text-lg">{statusInfo.icon}</span> {statusInfo.label}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
