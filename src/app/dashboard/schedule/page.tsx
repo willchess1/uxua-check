@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, Calendar as CalendarIcon, CalendarPlus, X } from 'lucide-react';
 import * as React from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/lib/firebase/provider';
 
 const INSPECTION_TYPES: InspectionType[] = ['Preventiva', 'Corretiva', 'Pós Check-out', 'Pré Check-in'];
 
@@ -36,10 +37,11 @@ export default function SchedulePage() {
   
   const [inspections, setInspections] = useState<ScheduledInspection[]>(MOCK_SCHEDULED_INSPECTIONS);
   const [isCanceling, setIsCanceling] = useState<ScheduledInspection | null>(null);
+  const { auth } = useAuth();
 
 
   useEffect(() => {
-    const auth = getAuth();
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, user => {
         if (user?.email) {
             const fullUser = USERS[user.email];
@@ -54,7 +56,7 @@ export default function SchedulePage() {
         }
     });
     return () => unsubscribe();
-  }, [router, toast]);
+  }, [auth, router, toast]);
 
   const handleScheduleInspection = () => {
     if (!houseId || !technicianName || !scheduledDate || !inspectionType) {

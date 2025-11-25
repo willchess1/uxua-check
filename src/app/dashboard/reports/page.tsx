@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BarChart, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Bar } from 'recharts';
 import { ArrowLeft, Bot, Activity } from 'lucide-react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { USERS, MOCK_CHECKLIST_DATA } from '@/lib/data';
 import type { User } from '@/lib/types';
 import { performMaintenanceAnalysis, AnalyzeMaintenanceDataOutput } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/lib/firebase/provider';
 
 
 const PIE_COLORS = { ok: '#16a34a', pendente: '#facc15', resolvido: '#4f46e5', persistente: '#dc2626' };
@@ -24,9 +25,10 @@ export default function ReportsPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeMaintenanceDataOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { auth } = useAuth();
 
   useEffect(() => {
-    const auth = getAuth();
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, user => {
         if (user?.email) {
             const fullUser = USERS[user.email];
@@ -41,7 +43,7 @@ export default function ReportsPage() {
         }
     });
     return () => unsubscribe();
-  }, [router, toast]);
+  }, [auth, router, toast]);
   
   const handleGenerateReport = async () => {
     setIsLoading(true);
