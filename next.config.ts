@@ -1,3 +1,4 @@
+require('dotenv').config();
 import type {NextConfig} from 'next';
 
 const withPWA = require('next-pwa')({
