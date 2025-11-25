@@ -268,7 +268,8 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
             <div>
               <Label className="text-sm font-semibold mb-3 block">Selecione o Status</Label>
               <div className="grid grid-cols-2 gap-3">
-                {(Object.keys(STATUS_MAP) as unknown as (keyof typeof STATUS_MAP)[]).map((statusKey) => {
+                {(Object.keys(STATUS_MAP) as unknown as (keyof typeof STATUS_MAP)[]).map((s) => {
+                  const statusKey = Number(s) as Status;
                   const statusInfo = STATUS_MAP[statusKey];
                   const isSelected = modalStatus === statusKey;
                   return (
@@ -278,10 +279,10 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
                       onClick={() => setModalStatus(statusKey)}
                       className={cn(
                         "h-auto py-3 justify-start text-left text-sm font-semibold transition-all",
-                        isSelected && `text-gray-900 border-2 border-transparent ring-2 ring-offset-2 ring-offset-background`,
-                        isSelected && statusInfo.ring
+                         isSelected && "text-gray-900 border-2 border-transparent ring-2 ring-offset-2 ring-offset-background",
+                         isSelected && statusInfo.ring
                       )}
-                      style={isSelected ? { backgroundColor: statusInfo.lightColor } : {}}
+                      style={isSelected ? { backgroundColor: statusInfo.lightColor, color: '#020617'} : {}}
                     >
                       <span className="mr-3 text-lg">{statusInfo.icon}</span> {statusInfo.label}
                     </Button>

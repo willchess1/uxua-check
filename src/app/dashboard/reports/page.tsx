@@ -10,11 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { USERS, MOCK_CHECKLIST_DATA } from '@/lib/data';
 import type { User } from '@/lib/types';
-import { analyzeMaintenanceData, AnalyzeMaintenanceDataOutput } from '@/lib/actions';
+import { performMaintenanceAnalysis, AnalyzeMaintenanceDataOutput } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const COLORS = ['#16a34a', '#facc15', '#4f46e5', '#dc2626']; // green, yellow, indigo, red
-const PIE_COLORS = { ok: '#16a34a', pending: '#facc15', resolved: '#4f46e5', persisting: '#dc2626' };
+const PIE_COLORS = { ok: '#16a34a', pendente: '#facc15', resolvido: '#4f46e5', persistente: '#dc2626' };
 
 export default function ReportsPage() {
   const router = useRouter();
@@ -32,16 +31,16 @@ export default function ReportsPage() {
     const parsedUser = JSON.parse(storedUser);
     const fullUser = USERS[parsedUser.email];
     
-    if (fullUser.role !== 'manager' && fullUser.role !== 'dev') {
+    if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
+       setCurrentUser(fullUser);
+    } else {
         toast({
             title: 'Acesso Negado',
             description: 'Você não tem permissão para acessar esta página.',
             variant: 'destructive',
         });
         router.push('/dashboard');
-        return;
     }
-    setCurrentUser(fullUser);
   }, [router, toast]);
   
   const handleGenerateReport = async () => {
@@ -49,7 +48,7 @@ export default function ReportsPage() {
     setAnalysis(null);
     try {
         // In a real app, you would fetch this data from Firestore
-        const result = await analyzeMaintenanceData({ checklists: MOCK_CHECKLIST_DATA });
+        const result = await performMaintenanceAnalysis({ checklists: MOCK_CHECKLIST_DATA });
         if(result.success && result.analysis) {
             setAnalysis(result.analysis);
             toast({
@@ -76,10 +75,10 @@ export default function ReportsPage() {
       { name: 'Pendente', value: analysis.overallStatus.pending },
       { name: 'Resolvido', value: analysis.overallStatus.resolved },
       { name: 'Persistente', value: analysis.overallStatus.persisting },
-  ] : [];
+  ].filter(item => item.value > 0) : [];
 
   if (!currentUser) {
-    return null; // or a loading skeleton
+    return <LoadingSkeleton />; // Show skeleton while checking user
   }
 
   return (
@@ -137,7 +136,7 @@ export default function ReportsPage() {
                                     <Cell key={`cell-${index}`} fill={PIE_COLORS[entry.name.toLowerCase() as keyof typeof PIE_COLORS]} />
                                 ))}
                             </Pie>
-                            <Tooltip />
+                            <Tooltip formatter={(value) => `${value} itens`} />
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
@@ -151,10 +150,10 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={analysis.topProblematicHouses} layout="vertical" margin={{ top: 5, right: 10, left: 40, bottom: 5 }}>
-                             <XAxis type="number" />
+                        <BarChart data={analysis.topProblematicHouses} layout="vertical" margin={{ top: 5, right: 20, left: 50, bottom: 5 }}>
+                             <XAxis type="number" allowDecimals={false} />
                              <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12 }} />
-                             <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} />
+                             <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} formatter={(value) => `${value} problemas`}/>
                              <Bar dataKey="value" name="Problemas" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
@@ -168,10 +167,10 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                      <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={analysis.topProblematicItems} layout="vertical" margin={{ top: 5, right: 10, left: 40, bottom: 5 }}>
-                             <XAxis type="number" />
-                             <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12, width: 100 }} />
-                             <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} />
+                        <BarChart data={analysis.topProblematicItems} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }}>
+                             <XAxis type="number" allowDecimals={false} />
+                             <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 12 }} interval={0} />
+                             <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} formatter={(value) => `${value} ocorrências`}/>
                              <Bar dataKey="value" name="Ocorrências" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]}/>
                         </BarChart>
                     </ResponsiveContainer>

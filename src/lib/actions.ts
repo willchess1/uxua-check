@@ -13,7 +13,8 @@ export async function getSummary(input: SummarizePropertyIssuesInput) {
     }
 }
 
-export async function getMaintenanceAnalysis(input: AnalyzeMaintenanceDataInput): Promise<{ success: boolean; analysis?: AnalyzeMaintenanceDataOutput; error?: string; }> {
+// Renamed for clarity to avoid confusion with the server action name.
+export async function performMaintenanceAnalysis(input: AnalyzeMaintenanceDataInput): Promise<{ success: boolean; analysis?: AnalyzeMaintenanceDataOutput; error?: string; }> {
     try {
         const analysis = await analyzeMaintenanceData(input);
         return { success: true, analysis };
