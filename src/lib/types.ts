@@ -25,3 +25,11 @@ export interface House {
     id: string;
     name: string;
 }
+
+export type UserRole = 'dev' | 'manager' | 'supervisor' | 'technician';
+
+export interface User {
+    email: string;
+    name: string;
+    role: UserRole;
+}

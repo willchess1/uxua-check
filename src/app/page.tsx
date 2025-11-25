@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -10,9 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/app/components/Logo';
+import { USERS } from '@/lib/data';
+import type { UserRole } from '@/lib/types';
 
 // MOCK LOGIN - This will be replaced with Firebase Auth
-const MOCK_USERS: Record<string, string> = {
+const MOCK_PASSWORDS: Record<string, string> = {
   'william@uxua.com': 'dev@uxua2024',
   'viviane@uxua.com': 'uxua2024',
   'thiago@uxua.com': 'uxua2024',
@@ -29,11 +31,16 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Clear session on component mount
+  useEffect(() => {
+    localStorage.removeItem('user');
+  }, []);
+
 
   const handleLogin = () => {
     setIsLoading(true);
 
-    // Basic validation
     if (!email || !password) {
       toast({
         title: 'Campos Incompletos',
@@ -46,22 +53,28 @@ export default function Home() {
 
     // MOCK AUTHENTICATION
     setTimeout(() => {
-        if (MOCK_USERS[email.toLowerCase()] === password) {
-             toast({
-                title: 'Login bem-sucedido!',
-                description: 'Redirecionando...',
-            });
-            // In a real app, you would set a session/token here
-            // For now, we'll just redirect to a protected route.
-            router.push('/dashboard');
-        } else {
-            toast({
-                title: 'Credenciais Inválidas',
-                description: 'Verifique seu e-mail e senha e tente novamente.',
-                variant: 'destructive',
-            });
-        }
-        setIsLoading(false);
+      const userEmail = email.toLowerCase();
+      const user = USERS[userEmail];
+      
+      if (user && MOCK_PASSWORDS[userEmail] === password) {
+        toast({
+          title: 'Login bem-sucedido!',
+          description: `Bem-vindo, ${user.name}! Redirecionando...`,
+        });
+
+        // In a real app, you would get a session/token here.
+        // For now, we store user info in localStorage.
+        localStorage.setItem('user', JSON.stringify({ email: userEmail, name: user.name, role: user.role }));
+        
+        router.push('/dashboard');
+      } else {
+        toast({
+          title: 'Credenciais Inválidas',
+          description: 'Verifique seu e-mail e senha e tente novamente.',
+          variant: 'destructive',
+        });
+      }
+      setIsLoading(false);
     }, 1000);
   };
 

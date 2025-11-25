@@ -1,4 +1,14 @@
-import type { House, ChecklistItem, StatusInfo, ChecklistItemState } from './types';
+import type { House, ChecklistItem, StatusInfo, ChecklistItemState, User } from './types';
+
+export const USERS: Record<string, User> = {
+    'william@uxua.com': { name: 'William', role: 'dev' },
+    'viviane@uxua.com': { name: 'Viviane', role: 'manager' },
+    'thiago@uxua.com': { name: 'Thiago', role: 'supervisor' },
+    'vagner@uxua.com': { name: 'Vagner', role: 'supervisor' },
+    'keny@uxua.com': { name: 'Keny', role: 'technician' },
+    'bruno@uxua.com': { name: 'Bruno', role: 'technician' },
+    'romario@uxua.com': { name: 'Romario', role: 'technician' },
+};
 
 export const TECHNICIANS: string[] = ['William', 'Viviane', 'Thiago', 'Vagner', 'Keny', 'Bruno', 'Romario', 'Outro (Anotar em Observação)'];
         
@@ -22,6 +32,9 @@ export const HOUSES: House[] = [
     { id: 'casa_artes', name: 'Artes' },
     { id: 'casa_anderson_mel_rosen', name: 'Andersen e Mel Rosen' },
 ];
+
+// MOCK DATA - This will be replaced by a database
+export const HOUSES_TO_INSPECT: string[] = ['casa_eugenia', 'casa_lago']; // Array of house IDs
 
 export const STATUS_MAP: Record<number, StatusInfo> = {
     0: { label: 'Pendente', color: 'bg-gray-400', ring: 'ring-gray-300', icon: '❓', button: 'bg-gray-500 hover:bg-gray-600' },
