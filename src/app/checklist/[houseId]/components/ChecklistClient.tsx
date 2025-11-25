@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Wand2, X, ChevronRight } from 'lucide-react';
+import { useState, useMemo, useRef } from 'react';
+import { Wand2, X, ChevronRight, Camera, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { CHECKLIST_ITEMS, INITIAL_STATE, STATUS_MAP } from '@/lib/data';
 import type { ChecklistItem, ChecklistState, Status } from '@/lib/types';
 import { getSummary } from '@/lib/actions';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface ChecklistClientProps {
   houseId: string;
@@ -30,16 +32,23 @@ const generateInitialState = (): ChecklistState => {
   return state;
 };
 
+const MAX_PHOTOS = 3;
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+
 export function ChecklistClient({ houseName }: ChecklistClientProps) {
   const [checklistState, setChecklistState] = useState<ChecklistState>(generateInitialState);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<ChecklistItem | null>(null);
   const [modalStatus, setModalStatus] = useState<Status>(0);
   const [modalNote, setModalNote] = useState('');
+  const [modalPhotos, setModalPhotos] = useState<string[]>([]);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [summary, setSummary] = useState({title: '', description: ''});
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleItemClick = (item: ChecklistItem) => {
@@ -47,6 +56,7 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
     const state = checklistState[item.id] || INITIAL_STATE;
     setModalStatus(state.status);
     setModalNote(state.note);
+    setModalPhotos(state.photos);
     setIsModalOpen(true);
   };
 
@@ -66,13 +76,14 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
       ...checklistState,
       [currentItem.id]: {
         status: modalStatus,
-        note: modalStatus !== 3 ? '' : modalNote, // Clear note if not a persistent problem
+        note: (modalStatus === 2 || modalStatus === 3) ? modalNote : '',
+        photos: modalPhotos,
       },
     };
     setChecklistState(newChecklistState);
     toast({
         title: "Item Atualizado",
-        description: `${currentItem.description} foi salvo.`,
+        description: `${currentItem.description} foi salvo com sucesso.`,
     });
     setIsModalOpen(false);
   };
@@ -91,7 +102,10 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
     const problematicItems = Object.entries(checklistState)
       .filter(([, state]) => state.status === 3)
       .reduce((acc, [id, state]) => {
-        acc[id] = state;
+        const item = CHECKLIST_ITEMS.find(i => i.id === id);
+        if (item) {
+          acc[item.description] = { status: state.status, note: state.note };
+        }
         return acc;
       }, {} as Record<string, { status: number; note: string }>);
 
@@ -122,6 +136,46 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
     }
   };
 
+  const handlePhotoUploadClick = () => {
+    fileInputRef.current?.click();
+  }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+        const file = event.target.files[0];
+        if (modalPhotos.length >= MAX_PHOTOS) {
+            toast({
+                title: 'Limite de fotos atingido',
+                description: `Você só pode adicionar até ${MAX_PHOTOS} fotos por item.`,
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+            toast({
+                title: 'Arquivo muito grande',
+                description: `A foto deve ter no máximo ${MAX_FILE_SIZE_MB}MB.`,
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (e.target?.result) {
+                setModalPhotos(prev => [...prev, e.target.result as string]);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+  }
+
+  const handleRemovePhoto = (index: number) => {
+    setModalPhotos(prev => prev.filter((_, i) => i !== index));
+  }
+
+
   const categorizedItems = useMemo(() => {
     return CHECKLIST_ITEMS.reduce((acc, item) => {
       (acc[item.category] = acc[item.category] || []).push(item);
@@ -142,7 +196,7 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
             <AlertDialogHeader>
               <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta ação limpará todos os status e notas do checklist para a casa {houseName}.
+                Esta ação limpará todos os status, notas e fotos do checklist para a casa {houseName}.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -177,12 +231,20 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
                         </div>
                         <div className="ml-4 flex-1">
                           <p className="font-medium text-card-foreground">{item.description}</p>
-                          <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-                            Status: <span className={cn(state.status === 3 ? 'text-destructive' : 'text-primary')}>{statusInfo.label}</span>
-                          </p>
+                           <div className="flex items-center gap-2 flex-wrap mt-1">
+                                <Badge variant={state.status === 3 ? "destructive" : "secondary"}>
+                                    Status: {statusInfo.label}
+                                </Badge>
+                                {state.photos.length > 0 && (
+                                    <Badge variant="outline">
+                                        <Camera className="mr-1.5 h-3 w-3" />
+                                        {state.photos.length} {state.photos.length > 1 ? 'fotos' : 'foto'}
+                                    </Badge>
+                                )}
+                           </div>
                           {state.note && (state.status === 2 || state.status === 3) && (
-                            <p className={cn("text-xs mt-1 font-medium", state.status === 3 ? 'text-destructive/80' : 'text-muted-foreground')}>
-                              Obs: {state.note}
+                            <p className={cn("text-xs mt-2 font-medium italic", state.status === 3 ? 'text-destructive/80' : 'text-muted-foreground')}>
+                              &quot;{state.note}&quot;
                             </p>
                           )}
                         </div>
@@ -202,7 +264,7 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
           <DialogHeader>
             <DialogTitle>{currentItem?.description}</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4">
+          <div className="py-4 space-y-6">
             <div>
               <Label className="text-sm font-semibold mb-3 block">Selecione o Status</Label>
               <div className="grid grid-cols-2 gap-3">
@@ -221,30 +283,57 @@ export function ChecklistClient({ houseName }: ChecklistClientProps) {
                 ))}
               </div>
             </div>
-            {modalStatus === 3 && (
+
+            {(modalStatus === 2 || modalStatus === 3) && (
               <div className="space-y-2 animate-in fade-in duration-300">
-                <Label htmlFor="modal-note">Observação (Obrigatório)</Label>
+                <Label htmlFor="modal-note">
+                  Observação {modalStatus === 3 ? '(Obrigatório)' : '(Opcional)'}
+                </Label>
                 <Textarea
                   id="modal-note"
                   value={modalNote}
                   onChange={(e) => setModalNote(e.target.value)}
-                  placeholder="Detalhes sobre o problema e qual a ação pendente."
-                  rows={4}
+                  placeholder={modalStatus === 3 ? "Detalhes sobre o problema e qual a ação pendente." : "Detalhes sobre a resolução."}
+                  rows={3}
                 />
               </div>
             )}
-             {(modalStatus === 2) && (
-              <div className="space-y-2 animate-in fade-in duration-300">
-                <Label htmlFor="modal-note">Observação (Opcional)</Label>
-                <Textarea
-                  id="modal-note"
-                  value={modalNote}
-                  onChange={(e) => setModalNote(e.target.value)}
-                  placeholder="Detalhes sobre a resolução."
-                  rows={4}
+            
+            <div className="space-y-3">
+                <Label className="text-sm font-semibold">📸 Fotos do Item ({modalPhotos.length}/{MAX_PHOTOS})</Label>
+                <div className="grid grid-cols-3 gap-2">
+                    {modalPhotos.map((photo, index) => (
+                        <div key={index} className="relative group aspect-square">
+                            <Image src={photo} alt={`Foto ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md" />
+                            <Button
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleRemovePhoto(index)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handlePhotoUploadClick}
+                    disabled={modalPhotos.length >= MAX_PHOTOS}
+                >
+                    <Camera className="mr-2 h-4 w-4" /> Tirar/Escolher Foto
+                </Button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/*"
+                    capture="environment"
                 />
-              </div>
-            )}
+            </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>

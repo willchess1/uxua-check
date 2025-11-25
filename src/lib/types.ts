@@ -17,6 +17,7 @@ export interface ChecklistItem {
 export interface ChecklistItemState {
   status: Status;
   note: string;
+  photos: string[];
 }
 
 export type ChecklistState = Record<string, ChecklistItemState>;
@@ -29,7 +30,6 @@ export interface House {
 export type UserRole = 'dev' | 'manager' | 'supervisor' | 'technician';
 
 export interface User {
-    email: string;
     name: string;
     role: UserRole;
 }

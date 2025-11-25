@@ -34,7 +34,7 @@ export const HOUSES: House[] = [
 ];
 
 // MOCK DATA - This will be replaced by a database
-export const HOUSES_TO_INSPECT: string[] = ['casa_eugenia', 'casa_lago']; // Array of house IDs
+export let HOUSES_TO_INSPECT: string[] = ['casa_eugenia', 'casa_lago']; // Array of house IDs
 
 export const STATUS_MAP: Record<number, StatusInfo> = {
     0: { label: 'Pendente', color: 'bg-gray-400', ring: 'ring-gray-300', icon: '❓', button: 'bg-gray-500 hover:bg-gray-600' },
@@ -43,7 +43,7 @@ export const STATUS_MAP: Record<number, StatusInfo> = {
     3: { label: 'Problema Persistente', color: 'bg-red-500', ring: 'ring-red-300', icon: '🚨', button: 'bg-red-600 hover:bg-red-700' },
 };
 
-export const INITIAL_STATE: ChecklistItemState = { status: 0, note: '' };
+export const INITIAL_STATE: ChecklistItemState = { status: 0, note: '', photos: [] };
 
 export const CHECKLIST_ITEMS: ChecklistItem[] = [
     { id: 'ac_func', category: 'Climatização', description: 'Ar Condicionado (Funcionamento, Temperaturas)' },
