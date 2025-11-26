@@ -259,7 +259,7 @@ export function ChecklistClient({ houseId, houseName, technician, initialInspect
     return Object.values(checklistState).every(item => item.status !== 0);
   }, [checklistState]);
 
-  if (!isDataLoaded || !inspectionId) {
+  if (!isDataLoaded || !inspectionId || !db) {
       return <div className="text-center p-10">Carregando dados da vistoria...</div>
   }
 

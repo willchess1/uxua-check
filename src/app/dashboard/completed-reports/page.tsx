@@ -29,7 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function CompletedReportsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { auth, user: authUser, loading: authLoading } = useAuth();
+  const { user: authUser, loading: authLoading } = useAuth();
   const { db } = useDb();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [reports, setReports] = useState<CompletedChecklist[]>([]);
@@ -50,7 +50,7 @@ export default function CompletedReportsPage() {
         router.push('/dashboard');
       }
     }
-  }, [auth, router, toast, authUser, authLoading]);
+  }, [router, toast, authUser, authLoading]);
 
   useEffect(() => {
     if (!currentUser || !db) return;
