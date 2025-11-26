@@ -10,7 +10,10 @@ export const USERS: Record<string, User> = {
     'romario@uxua.com': { name: 'Romario', role: 'technician' },
 };
 
-export const TECHNICIANS: string[] = ['William', 'Viviane', 'Thiago', 'Vagner', 'Keny', 'Bruno', 'Romario', 'Outro (Anotar em Observação)'];
+// Generate TECHNICIANS list from USERS object
+export const TECHNICIANS: string[] = Object.values(USERS)
+    .filter(user => ['dev', 'supervisor', 'technician'].includes(user.role))
+    .map(user => user.name);
         
 export const HOUSES: House[] = [
     { id: 'casa_eugenia', name: 'Eugénia' },
