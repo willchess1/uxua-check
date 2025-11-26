@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
@@ -19,8 +19,15 @@ export default function Home() {
   const { toast } = useToast();
   const [selectedEmail, setSelectedEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { auth } = useAuth();
+  const { auth, user, loading } = useAuth();
   
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+
   const handleLogin = async () => {
     setIsLoading(true);
     const password = 'uxua123'; // Senha padrão para todos os usuários
@@ -47,8 +54,8 @@ export default function Home() {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, selectedEmail, password);
-      const user = userCredential.user;
-      const userEmail = user.email;
+      const loggedInUser = userCredential.user;
+      const userEmail = loggedInUser.email;
 
       if (userEmail && USERS[userEmail]) {
         const userInfo = USERS[userEmail];
@@ -72,6 +79,10 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  if (loading || user) {
+    return <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">Carregando...</div>
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">

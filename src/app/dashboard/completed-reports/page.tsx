@@ -7,7 +7,6 @@ import { collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/fire
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, CheckCircle, AlertTriangle, FileText, ChevronRight } from 'lucide-react';
-import { onAuthStateChanged } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function CompletedReportsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { auth } = useAuth();
+  const { auth, user: authUser, loading: authLoading } = useAuth();
   const { db } = useDb();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [reports, setReports] = useState<CompletedChecklist[]>([]);
@@ -38,23 +37,20 @@ export default function CompletedReportsPage() {
   const [selectedReport, setSelectedReport] = useState<CompletedChecklist | null>(null);
 
   useEffect(() => {
-    if (!auth) return;
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user?.email) {
-        const fullUser = USERS[user.email];
-        if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
-          setCurrentUser(fullUser);
-        } else {
-          toast({ title: 'Acesso Negado', variant: 'destructive' });
-          router.push('/dashboard');
-        }
-      } else if (!user) {
-        router.push('/');
+     if (!authLoading && !authUser) {
+      router.push('/');
+      return;
+    }
+    if (authUser?.email) {
+      const fullUser = USERS[authUser.email];
+      if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
+        setCurrentUser(fullUser);
+      } else {
+        toast({ title: 'Acesso Negado', variant: 'destructive' });
+        router.push('/dashboard');
       }
-    });
-
-    return () => unsubscribeAuth();
-  }, [auth, router, toast]);
+    }
+  }, [auth, router, toast, authUser, authLoading]);
 
   useEffect(() => {
     if (!currentUser || !db) return;
@@ -81,7 +77,7 @@ export default function CompletedReportsPage() {
     return () => unsubscribeReports();
   }, [currentUser, db, toast]);
 
-  if (!currentUser) {
+  if (authLoading || !currentUser) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         Carregando...

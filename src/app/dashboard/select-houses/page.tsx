@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { onAuthStateChanged } from 'firebase/auth';
 import { ArrowLeft, ListChecks } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -20,26 +19,24 @@ export default function SelectHousesPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [selectedHouses, setSelectedHouses] = useState<string[]>(HOUSES_TO_INSPECT);
+  const { user: authUser, loading: authLoading } = useAuth();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const { auth } = useAuth();
 
   useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      if (user?.email) {
-          const fullUser = USERS[user.email];
-          if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
-              setCurrentUser(fullUser);
-          } else {
-              toast({ title: 'Acesso Negado', variant: 'destructive' });
-              router.push('/dashboard');
-          }
-      } else if (!user) {
-          router.push('/');
-      }
-    });
-    return () => unsubscribe();
-  }, [auth, router, toast]);
+    if (!authLoading && !authUser) {
+      router.push('/');
+      return;
+    }
+    if (authUser?.email) {
+        const fullUser = USERS[authUser.email];
+        if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
+            setCurrentUser(fullUser);
+        } else {
+            toast({ title: 'Acesso Negado', variant: 'destructive' });
+            router.push('/dashboard');
+        }
+    }
+  }, [authUser, authLoading, router, toast]);
 
   const handleHouseToggle = (houseId: string) => {
     setSelectedHouses((prev) =>
@@ -58,7 +55,7 @@ export default function SelectHousesPage() {
     router.push('/dashboard');
   };
 
-  if (!currentUser) {
+  if (authLoading || !currentUser) {
     return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
   }
 

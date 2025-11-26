@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -21,33 +21,28 @@ export default function DashboardPage() {
   const [technician, setTechnician] = useState('');
   const [houseId, setHouseId] = useState('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
   const [availableHouses, setAvailableHouses] = useState<House[]>([]);
-  const { auth } = useAuth();
+  const { auth, user: authUser, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (!auth) return;
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.email) {
-        const fullUser = USERS[user.email];
-        if (fullUser) {
-          setCurrentUser(fullUser);
-          if (fullUser.role === 'technician' || fullUser.role === 'supervisor' || fullUser.role === 'dev') {
-            setTechnician(fullUser.name);
-          }
-        } else {
-          toast({ title: 'Acesso Não Permitido', variant: 'destructive' });
-          signOut(auth);
-          router.push('/');
+    if (!authLoading && !authUser) {
+      router.push('/');
+      return;
+    }
+    if (authUser && authUser.email) {
+      const fullUser = USERS[authUser.email];
+      if (fullUser) {
+        setCurrentUser(fullUser);
+        if (['technician', 'supervisor', 'dev'].includes(fullUser.role)) {
+          setTechnician(fullUser.name);
         }
       } else {
+        toast({ title: 'Acesso Não Permitido', variant: 'destructive' });
+        if(auth) signOut(auth);
         router.push('/');
       }
-      setAuthChecked(true);
-    });
-    return () => unsubscribe();
-  }, [auth, router, toast]);
+    }
+  }, [authUser, authLoading, auth, router, toast]);
   
   useEffect(() => {
     if (!currentUser) return;
@@ -118,11 +113,9 @@ export default function DashboardPage() {
   const showManagerTools = currentUser?.role === 'manager' || currentUser?.role === 'dev';
   const showTechnicianTools = currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'dev';
 
-
-  if (!authChecked || !currentUser) {
+  if (authLoading || !currentUser) {
       return <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">Carregando...</div>
   }
-
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">

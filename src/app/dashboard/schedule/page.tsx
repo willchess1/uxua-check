@@ -7,7 +7,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, Calendar as CalendarIcon, CalendarPlus, X } from 'lucide-react';
 import * as React from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +27,7 @@ const INSPECTION_TYPES: InspectionType[] = ['Preventiva', 'Corretiva', 'Pós Che
 export default function SchedulePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [houseId, setHouseId] = useState<string>('');
@@ -37,26 +37,22 @@ export default function SchedulePage() {
   
   const [inspections, setInspections] = useState<ScheduledInspection[]>(MOCK_SCHEDULED_INSPECTIONS);
   const [isCanceling, setIsCanceling] = useState<ScheduledInspection | null>(null);
-  const { auth } = useAuth();
-
 
   useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, user => {
-        if (user?.email) {
-            const fullUser = USERS[user.email];
-            if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
-                setCurrentUser(fullUser);
-            } else {
-                toast({ title: 'Acesso Negado', variant: 'destructive' });
-                router.push('/dashboard');
-            }
-        } else if (!user) {
-            router.push('/');
+    if (!authLoading && !authUser) {
+      router.push('/');
+      return;
+    }
+    if (authUser?.email) {
+        const fullUser = USERS[authUser.email];
+        if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
+            setCurrentUser(fullUser);
+        } else {
+            toast({ title: 'Acesso Negado', variant: 'destructive' });
+            router.push('/dashboard');
         }
-    });
-    return () => unsubscribe();
-  }, [auth, router, toast]);
+    }
+  }, [authUser, authLoading, router, toast]);
 
   const handleScheduleInspection = () => {
     if (!houseId || !technicianName || !scheduledDate || !inspectionType) {
@@ -123,7 +119,7 @@ export default function SchedulePage() {
   }
 
 
-  if (!currentUser) {
+  if (authLoading || !currentUser) {
     return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
   }
 

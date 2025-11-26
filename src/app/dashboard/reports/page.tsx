@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BarChart, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Bar } from 'recharts';
 import { ArrowLeft, Bot, Activity } from 'lucide-react';
-import { onAuthStateChanged } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,28 +21,26 @@ const PIE_COLORS = { ok: '#16a34a', pendente: '#facc15', resolvido: '#4f46e5', p
 export default function ReportsPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeMaintenanceDataOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { auth } = useAuth();
-
+  
   useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, user => {
-        if (user?.email) {
-            const fullUser = USERS[user.email];
-            if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
-                setCurrentUser(fullUser);
-            } else {
-                toast({ title: 'Acesso Negado', variant: 'destructive' });
-                router.push('/dashboard');
-            }
-        } else if (!user) {
-            router.push('/');
+    if (!authLoading && !authUser) {
+      router.push('/');
+      return;
+    }
+    if (authUser?.email) {
+        const fullUser = USERS[authUser.email];
+        if (fullUser && (fullUser.role === 'manager' || fullUser.role === 'dev')) {
+            setCurrentUser(fullUser);
+        } else {
+            toast({ title: 'Acesso Negado', variant: 'destructive' });
+            router.push('/dashboard');
         }
-    });
-    return () => unsubscribe();
-  }, [auth, router, toast]);
+    }
+  }, [authUser, authLoading, router, toast]);
   
   const handleGenerateReport = async () => {
     setIsLoading(true);
@@ -79,7 +76,7 @@ export default function ReportsPage() {
       { name: 'Persistente', value: analysis.overallStatus.persisting },
   ].filter(item => item.value > 0) : [];
 
-  if (!currentUser) {
+  if (authLoading || !currentUser) {
     return <LoadingSkeleton />; // Show skeleton while checking user
   }
 
