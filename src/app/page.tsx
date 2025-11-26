@@ -109,7 +109,7 @@ export default function Home() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={true}
+                  disabled={isLoading}
                   onKeyPress={handleKeyPress}
                 />
               </div>
