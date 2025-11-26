@@ -5,6 +5,7 @@ import { analyzeMaintenanceData, type AnalyzeMaintenanceDataInput, type AnalyzeM
 import { doc, setDoc, getFirestore } from "firebase/firestore";
 import { getFirebaseApp } from '@/firebase/config';
 import type { ChecklistState, CompletedChecklist } from './types';
+import { CHECKLIST_ITEMS } from './data';
 
 // HACK: This is a workaround for a bug in server actions.
 // We need to initialize the app here to get a Firestore instance.
@@ -80,23 +81,3 @@ export async function submitChecklistReport({ houseId, houseName, technician, ch
         return { success: false, error: "Falha ao enviar o relatório. Tente novamente." };
     }
 }
-
-// HACK: We need to define CHECKLIST_ITEMS here because of a bug with server actions
-const CHECKLIST_ITEMS = [
-    { id: 'ac_func', category: 'Climatização', description: 'Ar Condicionado (Funcionamento, Temperaturas)' },
-    { id: 'ventiladores', category: 'Climatização', description: 'Ventiladores de Teto/Piso (Funcionamento, Ruído)' },
-    { id: 'lampadas_geral', category: 'Iluminação', description: 'Todas as Lâmpadas (Acionamento, Intensidade)' },
-    { id: 'dimmers', category: 'Iluminação', description: 'Dimmers e Luminárias Especiais (Regulagem)' },
-    { id: 'tomadas', category: 'Iluminação', description: 'Tomadas (Aparência, Tensão de Saída - Teste)' },
-    { id: 'vazamentos', category: 'Hidráulica', description: 'Vazamentos Visíveis (Sob pias, chuveiros, vasos)' },
-    { id: 'pressao_agua', category: 'Hidráulica', description: 'Pressão da Água (Torneiras e Chuveiros)' },
-    { id: 'descargas', category: 'Hidráulica', description: 'Descargas (Acionamento e Vedação)' },
-    { id: 'ralos', category: 'Hidráulica', description: 'Ralos (Drenagem Rápida e Ausência de Cheiro)' },
-    { id: 'aquecedor_gas', category: 'Hidráulica', description: 'Aquecedor a Gás (Funcionamento, Vazamentos)' },
-    { id: 'portas_janelas', category: 'Estrutural', description: 'Portas, Janelas e Cortinas (Abertura, Travamento)' },
-    { id: 'moveis', category: 'Estrutural', description: 'Móveis (Estabilidade, Danos visíveis, Ruídos)' },
-    { id: 'acabamentos', category: 'Estrutural', description: 'Paredes/Teto (Infiltrações, Mofo, Pintura)' },
-    { id: 'minibar', category: 'Eletro/Extras', description: 'Minibar/Geladeira (Funcionamento, Temperatura, Limpeza)' },
-    { id: 'cofre', category: 'Eletro/Extras', description: 'Cofre (Testar Travamento e Resetar Senha)' },
-    { id: 'av', category: 'Eletro/Extras', description: 'TV e Som (Canais, Conexões, Controles)' },
-];
