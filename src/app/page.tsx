@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,21 +20,21 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const { auth, user, loading } = useAuth();
   
+  // Redireciona se o usuário já estiver logado
   useEffect(() => {
     if (!loading && user) {
       router.push('/dashboard');
     }
   }, [user, loading, router]);
 
-
   const handleLogin = async () => {
     setIsLoading(true);
-    const password = 'uxua123'; // Senha padrão para todos os usuários
+    const password = 'uxua123'; // Senha padrão para todos os usuários de teste
 
     if (!auth) {
         toast({
             title: 'Erro de Autenticação',
-            description: 'O serviço de autenticação não está disponível. Tente novamente mais tarde.',
+            description: 'O serviço de autenticação não está disponível.',
             variant: 'destructive',
         });
         setIsLoading(false);
@@ -56,7 +55,7 @@ export default function Home() {
       await signInWithEmailAndPassword(auth, selectedEmail, password);
       toast({
         title: 'Login bem-sucedido!',
-        description: 'Redirecionando...',
+        description: 'Redirecionando para o dashboard...',
       });
       router.push('/dashboard');
     } catch (error) {
@@ -66,14 +65,17 @@ export default function Home() {
         description: 'Não foi possível fazer o login. Verifique se o usuário está ativo no Firebase.',
         variant: 'destructive',
       });
+    } finally {
       setIsLoading(false);
     }
   };
 
+  // Enquanto verifica o estado de autenticação, mostra uma tela de carregamento
   if (loading || user) {
     return <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">Carregando...</div>
   }
 
+  // Se não estiver carregando e não houver usuário, mostra a página de login
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md shadow-2xl">

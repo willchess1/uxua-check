@@ -18,25 +18,30 @@ import { useAuth } from '@/firebase/provider';
 export default function DashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { auth, user: authUser, loading: authLoading } = useAuth();
+  
   const [technician, setTechnician] = useState('');
   const [houseId, setHouseId] = useState('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [availableHouses, setAvailableHouses] = useState<House[]>([]);
-  const { auth, user: authUser, loading: authLoading } = useAuth();
 
   useEffect(() => {
+    // Se o carregamento da autenticação não terminou e não há usuário, redireciona para o login
     if (!authLoading && !authUser) {
       router.push('/');
       return;
     }
+    // Se houver um usuário autenticado, busca os detalhes completos dele
     if (authUser && authUser.email) {
       const fullUser = USERS[authUser.email];
       if (fullUser) {
         setCurrentUser(fullUser);
+        // Se o usuário for um técnico, supervisor ou dev, preenche o nome dele
         if (['technician', 'supervisor', 'dev'].includes(fullUser.role)) {
           setTechnician(fullUser.name);
         }
       } else {
+        // Se o e-mail não estiver na nossa lista de usuários, nega o acesso
         toast({ title: 'Acesso Não Permitido', variant: 'destructive' });
         if(auth) signOut(auth);
         router.push('/');
@@ -47,11 +52,13 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!currentUser) return;
   
+    // Gerentes e devs veem todas as casas
     if (currentUser.role === 'manager' || currentUser.role === 'dev') {
         setAvailableHouses(HOUSES);
         return;
     }
   
+    // Outros papéis veem apenas as casas a serem inspecionadas
     const housesToInspect = HOUSES.filter(h => HOUSES_TO_INSPECT.includes(h.id));
     setAvailableHouses(housesToInspect);
   
@@ -113,6 +120,7 @@ export default function DashboardPage() {
   const showManagerTools = currentUser?.role === 'manager' || currentUser?.role === 'dev';
   const showTechnicianTools = currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'dev';
 
+  // Mostra "Carregando..." enquanto a autenticação está sendo verificada
   if (authLoading || !currentUser) {
       return <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">Carregando...</div>
   }
