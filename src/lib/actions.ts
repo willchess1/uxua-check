@@ -3,7 +3,7 @@
 import { summarizePropertyIssues, type SummarizePropertyIssuesInput } from '@/ai/flows/summarize-property-issues';
 import { analyzeMaintenanceData, type AnalyzeMaintenanceDataInput, type AnalyzeMaintenanceDataOutput } from '@/ai/flows/analyze-maintenance-data';
 import { doc, setDoc, getFirestore } from "firebase/firestore";
-import { getFirebaseApp } from './firebase/config';
+import { getFirebaseApp } from '@/firebase/config';
 import type { ChecklistState, CompletedChecklist } from './types';
 
 // HACK: This is a workaround for a bug in server actions.

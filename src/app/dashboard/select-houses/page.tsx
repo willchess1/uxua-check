@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { HOUSES, HOUSES_TO_INSPECT, USERS } from '@/lib/data';
 import type { User } from '@/lib/types';
-import { useAuth } from '@/lib/firebase/provider';
+import { useAuth } from '@/firebase/provider';
 
 
 export default function SelectHousesPage() {

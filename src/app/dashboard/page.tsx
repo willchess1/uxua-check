@@ -13,7 +13,7 @@ import { TECHNICIANS, HOUSES, USERS, HOUSES_TO_INSPECT } from '@/lib/data';
 import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
 import { ListChecks, LogOut, CalendarPlus, AreaChart, CheckSquare } from 'lucide-react';
-import { useAuth } from '@/lib/firebase/provider';
+import { useAuth } from '@/firebase/provider';
 
 export default function DashboardPage() {
   const router = useRouter();

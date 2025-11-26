@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/app/components/Logo';
 import { USERS } from '@/lib/data';
-import { useAuth } from '@/lib/firebase/provider';
+import { useAuth } from '@/firebase/provider';
 
 export default function Home() {
   const router = useRouter();

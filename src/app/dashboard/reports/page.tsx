@@ -14,7 +14,7 @@ import { USERS, MOCK_CHECKLIST_DATA } from '@/lib/data';
 import type { User } from '@/lib/types';
 import { performMaintenanceAnalysis, AnalyzeMaintenanceDataOutput } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/lib/firebase/provider';
+import { useAuth } from '@/firebase/provider';
 
 
 const PIE_COLORS = { ok: '#16a34a', pendente: '#facc15', resolvido: '#4f46e5', persistente: '#dc2626' };

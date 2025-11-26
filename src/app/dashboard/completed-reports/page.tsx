@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { USERS } from '@/lib/data';
 import type { User, CompletedChecklist } from '@/lib/types';
-import { useAuth, useDb } from '@/lib/firebase/provider';
+import { useAuth, useDb } from '@/firebase/provider';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,

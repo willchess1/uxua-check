@@ -21,7 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/lib/firebase/provider';
+import { useAuth } from '@/firebase/provider';
 
 const INSPECTION_TYPES: InspectionType[] = ['Preventiva', 'Corretiva', 'Pós Check-out', 'Pré Check-in'];
 

@@ -19,7 +19,7 @@ import { getSummary, submitChecklistReport } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { useDb } from '@/lib/firebase/provider';
+import { useDb } from '@/firebase/provider';
 
 interface ChecklistClientProps {
   houseId: string;
