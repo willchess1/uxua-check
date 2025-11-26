@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -6,23 +7,23 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/app/components/Logo';
 import { USERS } from '@/lib/data';
 import { useAuth } from '@/firebase/provider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('uxua123');
+  const [selectedEmail, setSelectedEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { auth } = useAuth();
   
   const handleLogin = async () => {
     setIsLoading(true);
+    const password = 'uxua123'; // Senha padrão para todos os usuários
 
     if (!auth) {
         toast({
@@ -34,10 +35,10 @@ export default function Home() {
         return;
     }
 
-    if (!email || !password) {
+    if (!selectedEmail) {
       toast({
-        title: 'Campos Incompletos',
-        description: 'Por favor, preencha o e-mail e a senha.',
+        title: 'Seleção Incompleta',
+        description: 'Por favor, selecione um usuário para continuar.',
         variant: 'destructive',
       });
       setIsLoading(false);
@@ -45,7 +46,7 @@ export default function Home() {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, selectedEmail, password);
       const user = userCredential.user;
       const userEmail = user.email;
 
@@ -64,17 +65,11 @@ export default function Home() {
     } catch (error) {
       console.error("Firebase Auth Error:", error);
       toast({
-        title: 'Credenciais Inválidas',
-        description: 'Verifique seu e-mail e senha e tente novamente.',
+        title: 'Erro no Login',
+        description: 'Não foi possível fazer o login. Verifique se o usuário está ativo no Firebase.',
         variant: 'destructive',
       });
       setIsLoading(false);
-    }
-  };
-
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      handleLogin();
     }
   };
 
@@ -84,36 +79,27 @@ export default function Home() {
         <CardHeader className="text-center">
           <Logo className="h-8 w-auto mx-auto text-primary mb-4" />
           <CardTitle className="text-3xl font-extrabold">Bem-vindo</CardTitle>
-          <CardDescription className="pt-1">Faça login para acessar o sistema.</CardDescription>
+          <CardDescription className="pt-1">Selecione sua conta para começar.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
             <div className="grid gap-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu.email@uxua.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-                onKeyPress={handleKeyPress}
-              />
+              <Label htmlFor="user-select">Conta</Label>
+               <Select onValueChange={setSelectedEmail} value={selectedEmail}>
+                  <SelectTrigger id="user-select">
+                    <SelectValue placeholder="-- Selecione um usuário --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(USERS).map(([email, user]) => (
+                      <SelectItem key={email} value={email}>
+                        {user.name} ({user.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Senha</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  onKeyPress={handleKeyPress}
-                />
-              </div>
-            </div>
-            <Button onClick={handleLogin} size="lg" disabled={isLoading}>
+            
+            <Button onClick={handleLogin} size="lg" disabled={isLoading || !selectedEmail}>
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </div>
