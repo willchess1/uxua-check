@@ -53,22 +53,12 @@ export default function Home() {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, selectedEmail, password);
-      const loggedInUser = userCredential.user;
-      const userEmail = loggedInUser.email;
-
-      if (userEmail && USERS[userEmail]) {
-        const userInfo = USERS[userEmail];
-        toast({
-          title: 'Login bem-sucedido!',
-          description: `Bem-vindo, ${userInfo.name}! Redirecionando...`,
-        });
-        
-        router.push('/dashboard');
-      } else {
-        throw new Error("Usuário não encontrado em nossa lista de permissões.");
-      }
-
+      await signInWithEmailAndPassword(auth, selectedEmail, password);
+      toast({
+        title: 'Login bem-sucedido!',
+        description: 'Redirecionando...',
+      });
+      router.push('/dashboard');
     } catch (error) {
       console.error("Firebase Auth Error:", error);
       toast({

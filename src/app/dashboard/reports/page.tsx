@@ -77,7 +77,7 @@ export default function ReportsPage() {
   ].filter(item => item.value > 0) : [];
 
   if (authLoading || !currentUser) {
-    return <LoadingSkeleton />; // Show skeleton while checking user
+    return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
   }
 
   return (
