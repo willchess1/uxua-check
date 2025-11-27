@@ -40,7 +40,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
 
   return (
     <FirebaseContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </FirebaseContext.Provider>
   );
 }

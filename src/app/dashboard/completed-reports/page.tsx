@@ -77,7 +77,7 @@ export default function CompletedReportsPage() {
     return () => unsubscribeReports();
   }, [currentUser, db, toast]);
 
-  if (authLoading || !currentUser) {
+  if (authLoading || !currentUser || isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         Carregando...
@@ -102,13 +102,7 @@ export default function CompletedReportsPage() {
 
         <Card>
           <CardContent className="p-0">
-            {isLoading ? (
-              <div className="space-y-2 p-4">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            ) : reports.length === 0 ? (
+            {reports.length === 0 ? (
               <div className="text-center py-20 px-6">
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-medium">Nenhum Relatório</h3>
