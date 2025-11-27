@@ -14,6 +14,7 @@ import { Logo } from '@/app/components/Logo';
 import type { User, House } from '@/lib/types';
 import { ListChecks, CalendarPlus, AreaChart, CheckSquare, LogOut } from 'lucide-react';
 import { useAuth } from '@/firebase/provider';
+import AdminAccessModal from './components/AdminAccessModal';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   const [technician, setTechnician] = useState('');
   const [houseId, setHouseId] = useState('');
   const [availableHouses, setAvailableHouses] = useState<House[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !authUser) {
@@ -35,7 +37,6 @@ export default function DashboardPage() {
         if (userDetails) {
             setCurrentUser(userDetails);
         } else {
-            // Se o email do firebase não estiver em nosso mock, logout.
             signOut(auth);
             router.push('/');
         }
@@ -46,11 +47,9 @@ export default function DashboardPage() {
     if (currentUser) {
       if (['technician', 'supervisor', 'dev'].includes(currentUser.role)) {
         setTechnician(currentUser.name);
-      } else {
-        setTechnician('');
       }
       
-      if (currentUser.role === 'manager' || currentUser.role === 'dev') {
+      if (isAdmin) {
         setAvailableHouses(HOUSES);
       } else {
         const housesToInspect = HOUSES.filter(h => HOUSES_TO_INSPECT.includes(h.id));
@@ -59,7 +58,7 @@ export default function DashboardPage() {
       
       setHouseId('');
     }
-  }, [currentUser]);
+  }, [currentUser, isAdmin]);
 
   const handleStartChecklist = () => {
     if (!technician || !houseId) {
@@ -75,47 +74,22 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    toast({
-        title: 'Você saiu!',
-        description: 'Você foi desconectado com sucesso.'
-    });
+    toast({ title: 'Você saiu!', description: 'Você foi desconectado com sucesso.' });
     router.push('/');
   }
 
   const getWelcomeMessage = () => {
-    if (!currentUser) return 'Selecione para Iniciar a Vistoria';
-    switch (currentUser.role) {
-      case 'manager':
-        return 'Bem-vinda, Gerente. O que faremos hoje?';
-      case 'supervisor':
-        return 'Bem-vindo, Supervisor. Revise as vistorias pendentes.';
-       case 'technician':
-        return 'Bem-vindo, Técnico. Selecione uma casa para iniciar.';
-      case 'dev':
-        return 'Bem-vindo, Dev. Acesso total ao sistema.';
-      default:
-        return 'Bem-vindo! Selecione para iniciar.';
-    }
+    if (!currentUser) return 'Carregando...';
+    if (isAdmin) return 'Bem-vindo, Admin. Acesso total.';
+    return `Bem-vindo, ${currentUser.name}.`;
   };
   
   const isTechnicianListDisabled = currentUser?.role !== 'dev' && currentUser?.role !== 'manager';
   
   const getHouseSelectLabel = () => {
-    if (!currentUser) return 'Casa a Inspecionar';
-    switch (currentUser.role) {
-        case 'supervisor':
-        case 'technician':
-            return 'Casa para Vistoria (Pendentes)';
-        case 'manager':
-        case 'dev':
-            return 'Casa a Inspecionar (Todas)';
-        default:
-            return 'Selecione a Casa';
-    }
+    if (isAdmin) return 'Casa a Inspecionar (Todas)';
+    return 'Casa para Vistoria (Pendentes)';
   }
-
-  const showManagerTools = currentUser?.role === 'manager' || currentUser?.role === 'dev';
-  const showTechnicianTools = currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'dev';
 
   if (authLoading || !currentUser) {
       return <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">Carregando...</div>
@@ -131,7 +105,8 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
             <div className="grid gap-4">
-              {showManagerTools && (
+              {isAdmin ? (
+                // Botões de Admin visíveis após login
                 <div className="grid gap-4">
                   <Button onClick={() => router.push('/dashboard/select-houses')} size="lg">
                     <ListChecks className="mr-2" />
@@ -150,9 +125,8 @@ export default function DashboardPage() {
                     Ver Relatórios com IA
                   </Button>
                 </div>
-              )}
-
-              {showTechnicianTools && (
+              ) : (
+                // Ferramentas para Técnicos e outros
                 <div className="grid gap-6 pt-4">
                   <div className="grid gap-2">
                     <Label htmlFor="technician-select">Seu Nome</Label>
@@ -170,9 +144,7 @@ export default function DashboardPage() {
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="house-select">
-                      {getHouseSelectLabel()}
-                    </Label>
+                    <Label htmlFor="house-select">{getHouseSelectLabel()}</Label>
                     <Select onValueChange={setHouseId} value={houseId}>
                       <SelectTrigger id="house-select">
                         <SelectValue placeholder={availableHouses.length > 0 ? "-- Selecione a Casa --" : "Nenhuma casa para vistoria"} />
@@ -198,6 +170,7 @@ export default function DashboardPage() {
             </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
+          {!isAdmin && <AdminAccessModal onAdminAccessGranted={() => setIsAdmin(true)} />}
            <Button onClick={handleLogout} variant="ghost" className="w-full">
                 <LogOut className="mr-2" />
                 Sair
