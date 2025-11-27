@@ -18,7 +18,7 @@ import type { ChecklistItem, ChecklistState, Status } from '@/lib/types';
 import { getSummary, submitChecklistReport } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { useDb } from '@/firebase/provider';
 
 interface ChecklistClientProps {
@@ -109,22 +109,34 @@ export function ChecklistClient({ houseId, houseName, technician, initialInspect
       return;
     }
 
-    const newChecklistState = {
-      ...checklistState,
-      [currentItem.id]: {
-        status: modalStatus,
-        note: (modalStatus === 3 || modalStatus === 2) ? modalNote : '',
-        photos: (modalStatus === 3) ? modalPhotos : [],
-      },
+    const itemUpdate = {
+      status: modalStatus,
+      note: (modalStatus === 3 || modalStatus === 2) ? modalNote : '',
+      photos: (modalStatus === 3) ? modalPhotos : [],
     };
-    
-    await setDoc(inspectionDocRef, { checklistState: newChecklistState }, { merge: true });
 
-    toast({
-        title: "Item Atualizado",
-        description: `${currentItem.description} foi salvo com sucesso.`,
-    });
-    setIsModalOpen(false);
+    // Use dot notation to update a nested field
+    const fieldPath = `checklistState.${currentItem.id}`;
+    
+    try {
+      await updateDoc(inspectionDocRef, {
+        [fieldPath]: itemUpdate
+      });
+
+      toast({
+          title: "Item Atualizado",
+          description: `${currentItem.description} foi salvo com sucesso.`,
+      });
+      setIsModalOpen(false);
+
+    } catch (error) {
+       console.error("Error updating document: ", error);
+       toast({
+          title: 'Erro ao Salvar',
+          description: 'Não foi possível salvar as alterações. Tente novamente.',
+          variant: 'destructive',
+        });
+    }
   };
 
   const handleResetChecklist = async () => {
